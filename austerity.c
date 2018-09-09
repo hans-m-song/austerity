@@ -28,11 +28,15 @@ Err read_deck(FILE* deck) {
 
             break;
         }
-       
-        int res, color, points, purple, brown, yellow, red;
-        res = sscanf(line, "%c:%d:%d,%d,%d,%d", 
-                (char*)&color, &points, &purple, &brown, &yellow, &red);
-        if(res != 6) {
+      
+        char color, end;
+        int res, points, purple, brown, yellow, red;
+        res = sscanf(line, "%c:%d:%d,%d,%d,%d%c", 
+                &color, &points, &purple, &brown, &yellow, &red, &end);
+        char* validColors = "PBYR";
+        if(res != 7 || end != '\n' || strspn(&color, validColors) != 1 || 
+                points < 0 || purple < 0 || brown < 0 || yellow < 0 || 
+                red < 0) {
             printf("got invalid line: %s", line);
             error = ERR;
             break;
