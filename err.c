@@ -35,7 +35,7 @@ void perr_msg(Err code, char* ptype) {
  */
 void herr_msg(Err code) {
     char* str = "Usage: austerity tokens points "
-                "deck player player [player ...]\n";
+            "deck player player [player ...]\n";
     switch(code) {
         case OK:
             return;

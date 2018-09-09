@@ -4,25 +4,27 @@
 
 #include "err.h"
 #include "common.h"
+#include "card.h"
+
 /*
 #include "comms.h"
 #include "token.h"
-#include "card.h"
 */
+
 
 /*
  * checks contents of deck and saves to memory
- * params:  deck - file containing deck
+ * params:  deckFile - file containing deck
+ *          game - struct containing relevant game information
  * returns: ERR if invalid contents,
  *          OK otherwise
  */
-Err read_deck(FILE* deck) {
+Err read_deck(FILE* deckFile, Game* game) {
     Err error = OK;
-    int numCards = 0;
     char* line = (char*)malloc(sizeof(char) * LINE_BUFF);
     while(1) {
-        if(fgets(line, LINE_BUFF, deck) == NULL) {
-            if(!numCards) {
+        if(fgets(line, LINE_BUFF, deckFile) == NULL) {
+            if(!game->numCards) {
                 error = ERR;
             }
 
@@ -37,7 +39,6 @@ Err read_deck(FILE* deck) {
         if(res != 7 || end != '\n' || strspn(&color, validColors) != 1 || 
                 points < 0 || purple < 0 || brown < 0 || yellow < 0 || 
                 red < 0) {
-            printf("got invalid line: %s", line);
             error = ERR;
             break;
         }
@@ -46,13 +47,17 @@ Err read_deck(FILE* deck) {
         printf("got line: %s", line);
 #endif
 
-        numCards++;
+        if(add_card(game, color, points, 
+                    purple, brown, yellow, red) != OK) {
+            return ERR;
+        }
+        game->numCards++;
     }
 
     free(line);
 
 #ifdef TEST
-    printf("got %d cards\n", numCards);
+    printf("got %d cards\n", game->numCards);
 #endif
 
     return error;
@@ -73,13 +78,14 @@ Err start_players(int pCount, char** players) {
  * checks invocation arguments and saves into session memory
  * params:  argc - number of invocation arguments
  *          argv - array of invocation arguments
+ *          game - struct containing game relevant information
  * returns: E_ARGV if any invalid arguments, 
  *          E_DECKIO if deck cannot be accessed, 
  *          E_DECKR if invalid deck contents,
  *          E_EXEC if players couldn't be started
  *          OK otherwise
  */
-Err init_game(int argc, char** argv) {
+Err init_game(int argc, char** argv, Game* game) {
     char* temp;
     long int numTokens = strtol(argv[1], &temp, 10);
     long int numPoints = strtol(argv[2], &temp, 10);
@@ -88,15 +94,17 @@ Err init_game(int argc, char** argv) {
         return E_ARGV;
     }
 
-    FILE* deck = fopen(argv[3], "r");
-    if(!deck) {
+    FILE* deckFile = fopen(argv[3], "r");
+    if(!deckFile) {
         return E_DECKIO;
     }
 
-    if(read_deck(deck) != OK) {
+    game->numCards = 0;
+    if(read_deck(deckFile, game) != OK) {
         return E_DECKR;
     }
-    fclose(deck);
+    fclose(deckFile);
+    print_deck(game->deck, game->numCards);
     
     if(start_players(argc - 3, argv + 3) != OK) {
         return E_EXEC;
@@ -107,18 +115,19 @@ Err init_game(int argc, char** argv) {
 
 int main(int argc, char** argv) {
     Err error = OK;
+    Game game;
     if(argc < 6) {
         error = E_ARGC;
         herr_msg(error);
         return error;
     }
 
-    error = init_game(argc, argv);
+    error = init_game(argc, argv, &game);
     if(error) {
+        shred_deck(game.deck, game.numCards);
         herr_msg(error);
         return error;
     }
-
 
     herr_msg(error);
     return error;

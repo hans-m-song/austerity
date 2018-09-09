@@ -4,14 +4,14 @@ flags.test := -DTEST -std=c99 -Wall -pedantic -g
 flags.verbose := -DTEST -DVERBOSE -std=c99 -Wall -pedantic -g
 flags.release := -std=c99 -Wall -pedantic -g
 FLAGS := $(flags.$(BUILD))
-OBJ = err.o common.o
-#comms.o token.o card.o player_common.o
+OBJ = err.o common.o card.o
+#comms.o token.o playerCommon.o
 
 all: aus 
 	@echo BUILD=$(BUILD)
 #ban ed shen
 
-aus: $(OBJ)
+aus: $(OBJ) 
 	$(CC) $(FLAGS) $(OBJ) austerity.c -o austerity
 
 ban: $(OBJ)
