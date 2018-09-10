@@ -34,7 +34,7 @@ void print_deck(Deck deck, int numCards) {
  * returns: ERR if malloc fails (game will still end with E_CARDR,
  *          OK otherwise
  */
-Err add_card(Game* game, char color, int points, 
+Error add_card(Game* game, char color, int points, 
         int purple, int brown, int yellow, int red) {
     if(game->numCards) {
         game->deck = (Deck)realloc(game->deck, 

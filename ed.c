@@ -26,6 +26,6 @@ int main(int argc, char** argv) {
     printf("ed[%d] launched successfully\n", pID);
 #endif
 
-    Err error = OK;
-    return error;
+    Error err = OK;
+    return err;
 }

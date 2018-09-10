@@ -26,7 +26,7 @@ void print_card(Card card);
 
 void print_deck(Deck deck, int numCards);
 
-Err add_card(Game* game, char color, int points,
+int add_card(Game* game, char color, int points,
         int purple, int brown, int yellow, int red);
 
 void shred_deck(Deck deck, int numCards);

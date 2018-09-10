@@ -26,6 +26,6 @@ int main(int argc, char** argv) {
     printf("banzai[%d] launched successfully\n", pID);
 #endif
 
-    Err error = OK;
-    return error;
+    Error err = OK;
+    return err;
 }

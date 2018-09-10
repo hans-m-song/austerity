@@ -16,10 +16,10 @@ typedef enum {
     E_PROTOCOL = 7,
     E_SIGINT = 10,
     ERR = -1 
-} Err;
+} Error;
 
-void perr_msg(Err code, char* ptype);
+void perr_msg(Error code, char* ptype);
 
-void herr_msg(Err code);
+void herr_msg(Error code);
 
 #endif

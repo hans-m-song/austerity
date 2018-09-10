@@ -9,8 +9,15 @@
 #include "card.h"
 #include "comms.h"
 
-void play_game() {
-    printf("play game\n");
+Error play_game(pid_t parentPID, Game* game) {
+    if(getpid() != parentPID) {
+        int status;
+        wait(&status);
+        printf("child playing game ended with %d\n", status);
+        return status;
+    }
+    printf("parent playing game\n");
+    return OK;
 }
 
 /*
@@ -24,13 +31,13 @@ void play_game() {
  * returns: ERR if invalid contents,
  *          OK otherwise
  */
-Err read_deck(FILE* deckFile, Game* game) {
-    Err error = OK;
+Error read_deck(FILE* deckFile, Game* game) {
+    Error err = OK;
     char* line = (char*)malloc(sizeof(char) * LINE_BUFF);
     while(1) {
         if(fgets(line, LINE_BUFF, deckFile) == NULL) {
             if(!game->numCards) {
-                error = ERR;
+                err = ERR;
             }
             break;
         }
@@ -43,7 +50,7 @@ Err read_deck(FILE* deckFile, Game* game) {
         if(res != 7 || end != '\n' || strspn(&color, validColors) != 1 || 
                 points < 0 || purple < 0 || brown < 0 || yellow < 0 || 
                 red < 0) {
-            error = ERR;
+            err = ERR;
             break;
         }
         
@@ -62,39 +69,33 @@ Err read_deck(FILE* deckFile, Game* game) {
     printf("got:\t%d cards\n", game->numCards);
 #endif
 
-    return error;
+    return err;
 }
 
 /*
  * starts the given players
  * params:  pCount - number of players to start
  *          players - array of player commands to exec
- * returns: ERR if any players did not start successfully,
+ * returns: E_EXEC if any players did not start successfully,
  *          OK otherwise
  */
-Err start_players(int pCount, char** players) {
+Error start_players(int pCount, char** players) {
     for(int i = 0; i < pCount; i++) {
-
+        char* args[] = {players[i], to_string(pCount), to_string(i), NULL};
 #ifdef TEST
-        printf("exec:\t%s\n", players[i]);
+        printf("exec:\t%s %s %s\n", args[0], args[1], args[2]);
 #endif
 
         int pid = fork();
         if(pid == ERR) { // failed to fork
-            return ERR;
+            // reap other players
+            return E_EXEC;
         } else if(pid == 0) { // child
-            char* args[] = {players[i], 
-                to_string(pCount), to_string(i), NULL};
             if(execv(args[0], args) == ERR) { // failed to exec
-                return ERR;
+                return E_EXEC;
             }
-            exit(0);
         }
     }
-    for(int i = 0; i < pCount; i++) {
-        wait(NULL);
-    }
-    play_game();
     return OK;
 }
 
@@ -109,7 +110,7 @@ Err start_players(int pCount, char** players) {
  *          E_EXEC if players couldn't be started
  *          OK otherwise
  */
-Err init_game(int argc, char** argv, Game* game) {
+Error init_game(int argc, char** argv, Game* game) {
     char* temp;
     long int numTokens = strtol(argv[1], &temp, 10);
     long int numPoints = strtol(argv[2], &temp, 10);
@@ -138,25 +139,30 @@ Err init_game(int argc, char** argv, Game* game) {
 }
 
 int main(int argc, char** argv) {
-    Err error = OK;
     Game game;
     if(argc < 6) {
-        error = E_ARGC;
-        herr_msg(error);
-        return error;
+        herr_msg(E_ARGC);
+        return E_ARGC;
     }
 
-    error = init_game(argc, argv, &game);
-    if(error) {
-        herr_msg(error);
-        return error;
+    Error err = OK;
+
+    err = init_game(argc, argv, &game);
+    if(err) {
+        herr_msg(err);
+        return err;
     }
 
-    if(start_players(argc - 4, argv + 4) != OK) {
+    pid_t parentPID = getpid();
+    err = start_players(argc - 4, argv + 4);
+    if(err) {
+        herr_msg(E_EXEC);
         return E_EXEC;
     }
 
+    err = play_game(parentPID, &game);
+
     shred_deck(game.deck, game.numCards);
-    herr_msg(error);
-    return error;
+    herr_msg(err);
+    return err;
 }
