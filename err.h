@@ -15,7 +15,7 @@ typedef enum {
     E_DEADPLAYER = 6,
     E_PROTOCOL = 7,
     E_SIGINT = 10,
-    ERR = 42
+    ERR = -1 
 } Err;
 
 void perr_msg(Err code, char* ptype);

@@ -6,9 +6,10 @@ flags.verbose := -DTEST -DVERBOSE -g $(DEFAULT)
 flags.release := $(DEFAULT)
 FLAGS := $(flags.$(BUILD))
 OBJ = err.o common.o card.o
-#comms.o token.o playerCommon.o
+POBJ = playerCommon.o
+#comms.o token.o 
 
-all: aus 
+all: aus shen ban ed 
 	@echo BUILD=$(BUILD)
 #ban ed shen
 
@@ -16,13 +17,13 @@ aus: $(OBJ)
 	$(CC) $(FLAGS) $(OBJ) austerity.c -o austerity
 
 ban: $(OBJ)
-	$(CC) $(FLAGS) $(OBJ) banzai.c -o banzai
+	$(CC) $(FLAGS) $(OBJ) $(POBJ) banzai.c -o banzai
 
 ed: $(OBJ)
-	$(CC) $(FLAGS) $(OBJ) ed.c -o ed
+	$(CC) $(FLAGS) $(OBJ) $(POBJ)  ed.c -o ed
 
 shen: $(OBJ)
-	$(CC) $(FLAGS) $(OBJ) shenzi.c -o shenzi
+	$(CC) $(FLAGS) $(OBJ) $(POBJ)  shenzi.c -o shenzi
 	
 
 %.o: %.c
