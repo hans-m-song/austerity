@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     }
 
 #ifdef TEST
-    printf("banzai[%d] launched successfully", pID);
+    printf("banzai[%d] launched successfully\n", pID);
 #endif
 
     Err error = OK;

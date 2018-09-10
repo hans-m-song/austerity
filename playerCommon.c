@@ -13,7 +13,7 @@
 int check_pcount(char* input) {
     char* temp;
     long int pCount = strtol(input, &temp, 10);
-    if(!pCount || pCount < 0) {
+    if(pCount < 2) {
         return ERR;
     }
     return (int)pCount;
@@ -28,7 +28,7 @@ int check_pcount(char* input) {
 int check_pid(char* input, int pCount) {
     char* temp;
     long int pID = strtol(input, &temp, 10);
-    if(!pID || pID < 0 || pID >= pCount ) {
+    if(pID < 0 || pID >= pCount ) {
         return ERR;
     }
     return (int)pID;

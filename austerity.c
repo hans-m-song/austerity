@@ -1,13 +1,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "err.h"
 #include "common.h"
 #include "card.h"
+#include "comms.h"
+
+void play_game() {
+    printf("play game\n");
+}
 
 /*
-#include "comms.h"
 #include "token.h"
 */
 
@@ -67,6 +73,28 @@ Err read_deck(FILE* deckFile, Game* game) {
  *          OK otherwise
  */
 Err start_players(int pCount, char** players) {
+    for(int i = 0; i < pCount; i++) {
+
+#ifdef TEST
+        printf("exec:\t%s\n", players[i]);
+#endif
+
+        int pid = fork();
+        if(pid == ERR) { // failed to fork
+            return ERR;
+        } else if(pid == 0) { // child
+            char* args[] = {players[i], 
+                to_string(pCount), to_string(i), NULL};
+            if(execv(args[0], args) == ERR) { // failed to exec
+                return ERR;
+            }
+            exit(0);
+        }
+    }
+    for(int i = 0; i < pCount; i++) {
+        wait(NULL);
+    }
+    play_game();
     return OK;
 }
 
@@ -106,10 +134,6 @@ Err init_game(int argc, char** argv, Game* game) {
     print_deck(game->deck, game->numCards);
 #endif
     
-    if(start_players(argc - 3, argv + 3) != OK) {
-        return E_EXEC;
-    }
-
     return OK;
 }
 
@@ -126,6 +150,10 @@ int main(int argc, char** argv) {
     if(error) {
         herr_msg(error);
         return error;
+    }
+
+    if(start_players(argc - 4, argv + 4) != OK) {
+        return E_EXEC;
     }
 
     shred_deck(game.deck, game.numCards);
