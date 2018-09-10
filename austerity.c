@@ -11,7 +11,6 @@
 #include "token.h"
 */
 
-
 /*
  * checks contents of deck and saves to memory
  * params:  deckFile - file containing deck
@@ -27,7 +26,6 @@ Err read_deck(FILE* deckFile, Game* game) {
             if(!game->numCards) {
                 error = ERR;
             }
-
             break;
         }
       
@@ -43,21 +41,19 @@ Err read_deck(FILE* deckFile, Game* game) {
             break;
         }
         
-#ifdef TEST
-        printf("got line: %s", line);
+#ifdef VERBOSE 
+        printf("fgets:\t%s", line);
 #endif
 
         if(add_card(game, color, points, 
-                    purple, brown, yellow, red) != OK) {
+                purple, brown, yellow, red) != OK) {
             return ERR;
         }
-        game->numCards++;
     }
-
     free(line);
 
 #ifdef TEST
-    printf("got %d cards\n", game->numCards);
+    printf("got:\t%d cards\n", game->numCards);
 #endif
 
     return error;
@@ -101,10 +97,14 @@ Err init_game(int argc, char** argv, Game* game) {
 
     game->numCards = 0;
     if(read_deck(deckFile, game) != OK) {
+        shred_deck(game->deck, game->numCards);
         return E_DECKR;
     }
     fclose(deckFile);
+
+#ifdef TEST
     print_deck(game->deck, game->numCards);
+#endif
     
     if(start_players(argc - 3, argv + 3) != OK) {
         return E_EXEC;
@@ -124,11 +124,11 @@ int main(int argc, char** argv) {
 
     error = init_game(argc, argv, &game);
     if(error) {
-        shred_deck(game.deck, game.numCards);
         herr_msg(error);
         return error;
     }
 
+    shred_deck(game.deck, game.numCards);
     herr_msg(error);
     return error;
 }

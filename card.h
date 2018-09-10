@@ -9,10 +9,10 @@
 // card fields
 #define COLOR 0 // color
 #define POINTS 1 // points
-#define P 2 // purple
-#define B 3 // brown
-#define Y 4 // yellow
-#define R 5 // red
+#define PU 2 // purple
+#define BR 3 // brown
+#define YE 4 // yellow
+#define RE 5 // red
 
 typedef int* Card;
 typedef Card* Deck;
@@ -21,6 +21,8 @@ typedef struct {
     int numCards;
     Deck deck;
 } Game;
+
+void print_card(Card card);
 
 void print_deck(Deck deck, int numCards);
 

@@ -1,8 +1,9 @@
 CC = gcc
+DEFAULT := -Wall -Werror -pedantic -std=c99
 BUILD := test
-flags.test := -DTEST -std=c99 -Wall -pedantic -g
-flags.verbose := -DTEST -DVERBOSE -std=c99 -Wall -pedantic -g
-flags.release := -std=c99 -Wall -pedantic -g
+flags.test := -DTEST -g $(DEFAULT)
+flags.verbose := -DTEST -DVERBOSE -g $(DEFAULT)
+flags.release := $(DEFAULT)
 FLAGS := $(flags.$(BUILD))
 OBJ = err.o common.o card.o
 #comms.o token.o playerCommon.o
