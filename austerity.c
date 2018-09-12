@@ -4,39 +4,47 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <limits.h>
 #include "err.h"
 #include "common.h"
 #include "card.h"
 #include "comms.h"
 
-Error play_game(pid_t parentPID, Game* game) {
-    if(getpid() != parentPID) {
-        int status;
-        wait(&status);
-        printf("child playing game ended with %d\n", status);
-        return status;
+/*
+ * main logic for the hub
+ * params:
+ * returns: E_DEADPLAYER if client disconnects,
+ *          E_PROTOCOL if client is being naughty
+ *          E_SIGINT if sigint was caught
+ *          OK otherwise for end of stack
+ */
+Error play_game(Game* game, pid_t parentPID) {
+    if(getpid() != parentPID) { // child
+        exit(ERR);
+    } else { // parent
+        for(int i = 0; i < game->pCount; i++) {
+            int status;
+            wait(&status);
+            printf("child %d returned %d\n", i, status);
+        }
     }
     printf("parent playing game\n");
     return OK;
 }
 
 /*
-#include "token.h"
-*/
-
-/*
  * checks contents of deck and saves to memory
  * params:  deckFile - file containing deck
- *          game - struct containing relevant game information
+ *          stack - struct containing relevant stack information
  * returns: ERR if invalid contents,
  *          OK otherwise
  */
-Error read_deck(FILE* deckFile, Game* game) {
+Error read_deck(FILE* deckFile, Stack* stack) {
     Error err = OK;
     char* line = (char*)malloc(sizeof(char) * LINE_BUFF);
     while(1) {
         if(fgets(line, LINE_BUFF, deckFile) == NULL) {
-            if(!game->numCards) {
+            if(!stack->numCards) {
                 err = ERR;
             }
             break;
@@ -58,7 +66,7 @@ Error read_deck(FILE* deckFile, Game* game) {
         printf("fgets:\t%s", line);
 #endif
 
-        if(add_card(game, color, points, 
+        if(add_card(stack, color, points, 
                 purple, brown, yellow, red) != OK) {
             return ERR;
         }
@@ -66,7 +74,7 @@ Error read_deck(FILE* deckFile, Game* game) {
     free(line);
 
 #ifdef TEST
-    printf("got:\t%d cards\n", game->numCards);
+    printf("got:\t%d cards\n", stack->numCards);
 #endif
 
     return err;
@@ -76,12 +84,16 @@ Error read_deck(FILE* deckFile, Game* game) {
  * starts the given players
  * params:  pCount - number of players to start
  *          players - array of player commands to exec
+ *          game - struct containing relevant game information
  * returns: E_EXEC if any players did not start successfully,
  *          OK otherwise
  */
-Error start_players(int pCount, char** players) {
-    for(int i = 0; i < pCount; i++) {
-        char* args[] = {players[i], to_string(pCount), to_string(i), NULL};
+Error start_players(char** players, Game* game) {
+    for(int i = 0; i < game->pCount; i++) {
+        char* pCount = to_string(game->pCount);
+        char* pID = to_string(i);
+        char* args[] = {players[i], pCount, pID, NULL};
+
 #ifdef TEST
         printf("exec:\t%s %s %s\n", args[0], args[1], args[2]);
 #endif
@@ -91,11 +103,15 @@ Error start_players(int pCount, char** players) {
             // reap other players
             return E_EXEC;
         } else if(pid == 0) { // child
+            // set up pipes
             if(execv(args[0], args) == ERR) { // failed to exec
                 return E_EXEC;
             }
         }
+        free(pCount);
+        free(pID);
     }
+
     return OK;
 }
 
@@ -112,29 +128,33 @@ Error start_players(int pCount, char** players) {
  */
 Error init_game(int argc, char** argv, Game* game) {
     char* temp;
+    game->pCount = argc - 4;
     long int numTokens = strtol(argv[1], &temp, 10);
     long int numPoints = strtol(argv[2], &temp, 10);
 
-    if(!numTokens || numTokens < 0 || !numPoints || numPoints < 0) {
+    if(!numTokens || numTokens < 0 || numTokens > UINT_MAX || 
+            !numPoints || numPoints < 0 || numPoints > UINT_MAX) {
         return E_ARGV;
     }
+    game->numTokens = numTokens;
+    game->numPoints = numPoints;
 
     FILE* deckFile = fopen(argv[3], "r");
     if(!deckFile) {
         return E_DECKIO;
     }
 
-    game->numCards = 0;
-    if(read_deck(deckFile, game) != OK) {
-        shred_deck(game->deck, game->numCards);
+    game->stack.numCards = 0;
+    if(read_deck(deckFile, &game->stack) != OK) {
+        shred_deck(game->stack.deck, game->stack.numCards);
         return E_DECKR;
     }
     fclose(deckFile);
 
 #ifdef TEST
-    print_deck(game->deck, game->numCards);
+    print_deck(game->stack.deck, game->stack.numCards);
 #endif
-    
+
     return OK;
 }
 
@@ -154,15 +174,15 @@ int main(int argc, char** argv) {
     }
 
     pid_t parentPID = getpid();
-    err = start_players(argc - 4, argv + 4);
+    err = start_players(argv + 4, &game);
     if(err) {
         herr_msg(E_EXEC);
         return E_EXEC;
     }
 
-    err = play_game(parentPID, &game);
+    err = play_game(&game, parentPID);
 
-    shred_deck(game.deck, game.numCards);
+    shred_deck(game.stack.deck, game.stack.numCards);
     herr_msg(err);
     return err;
 }

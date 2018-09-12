@@ -4,8 +4,8 @@
 
 /*
  * prints the corresponding player error code to stderr
- * params:  code    - a number corresponding to an game ending error
- *          ptype   - a string representing the type of player
+ * params:  code - a number corresponding to an game ending error
+ *          ptype - a string representing the type of player
  */
 void perr_msg(Error code, char* ptype) {
     switch(code) {
@@ -31,7 +31,7 @@ void perr_msg(Error code, char* ptype) {
 
 /*
  * prints the corresponding hub error code to stderr
- * params:  code    - a number corresponding to an game ending error
+ * params:  code - a number corresponding to an game ending error
  */
 void herr_msg(Error code) {
     char* str = "Usage: austerity tokens points "

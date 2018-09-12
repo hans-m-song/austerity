@@ -20,13 +20,13 @@ typedef Card* Deck;
 typedef struct {
     int numCards;
     Deck deck;
-} Game;
+} Stack;
 
 void print_card(Card card);
 
 void print_deck(Deck deck, int numCards);
 
-int add_card(Game* game, char color, int points,
+int add_card(Stack* stack, char color, int points,
         int purple, int brown, int yellow, int red);
 
 void shred_deck(Deck deck, int numCards);

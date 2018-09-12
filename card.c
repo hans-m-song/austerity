@@ -9,7 +9,7 @@
  */
 void print_card(Card card) {
     printf("print:\tcard %c:%d:%d,%d,%d,%d\n", (char)card[COLOR],
-            card[POINTS], card[PU],  card[BR], card[YE],  card[RE]);
+            card[POINTS], card[PU], card[BR], card[YE],  card[RE]);
 }
 
 /*
@@ -27,54 +27,54 @@ void print_deck(Deck deck, int numCards) {
 
 /*
  * increases size of deck and stores the new card
- * params:  game - struct containing relevant game information
+ * params:  stack - struct containing relevant stack information
  *          color - color of card
  *          points - amount of points card is worth
  *          purple, brown, yellow, red - respective token values
- * returns: ERR if malloc fails (game will still end with E_CARDR,
+ * returns: ERR if malloc fails (stack will still end with E_CARDR,
  *          OK otherwise
  */
-Error add_card(Game* game, char color, int points, 
+Error add_card(Stack* stack, char color, int points, 
         int purple, int brown, int yellow, int red) {
-    if(game->numCards) {
-        game->deck = (Deck)realloc(game->deck, 
-                sizeof(Card) * (game->numCards + 1));
+    if(stack->numCards) {
+        stack->deck = (Deck)realloc(stack->deck, 
+                sizeof(Card) * (stack->numCards + 1));
     } else {
-        game->deck = (Deck)malloc(sizeof(Card));
+        stack->deck = (Deck)malloc(sizeof(Card));
     }
 
-    if(!game->deck) {
+    if(!stack->deck) {
         return ERR;
     }
 
 #ifdef VERBOSE
-    printf("alloc:\tcard[%d]\n", game->numCards);
-    printf("saving:\tcard[%d] %c:%d:%d,%d,%d,%d\n", game->numCards,
+    printf("alloc:\tcard[%d]\n", stack->numCards);
+    printf("saving:\tcard[%d] %c:%d:%d,%d,%d,%d\n", stack->numCards,
             color, points, purple, brown, yellow, red);
 #endif
     
-    game->deck[game->numCards] = (Card)malloc(sizeof(int) * CARD_SIZE + 1);
-    if(!game->deck[game->numCards]) {
+    stack->deck[stack->numCards] = (Card)malloc(sizeof(int) * CARD_SIZE + 1);
+    if(!stack->deck[stack->numCards]) {
         return ERR;
     }
-    game->deck[game->numCards][COLOR] = (int)color;
-    game->deck[game->numCards][POINTS] = points;
-    game->deck[game->numCards][PU] = purple;
-    game->deck[game->numCards][BR] = brown;
-    game->deck[game->numCards][YE] = yellow;
-    game->deck[game->numCards][RE] = red;
+    stack->deck[stack->numCards][COLOR] = (int)color;
+    stack->deck[stack->numCards][POINTS] = points;
+    stack->deck[stack->numCards][PU] = purple;
+    stack->deck[stack->numCards][BR] = brown;
+    stack->deck[stack->numCards][YE] = yellow;
+    stack->deck[stack->numCards][RE] = red;
 
 #ifdef TEST 
-    printf("saved:\tcard[%d] %c:%d:%d,%d,%d,%d\n", game->numCards,
-            (char)game->deck[game->numCards][COLOR], 
-            game->deck[game->numCards][POINTS],
-            game->deck[game->numCards][PU], 
-            game->deck[game->numCards][BR],
-            game->deck[game->numCards][YE],
-            game->deck[game->numCards][RE]);
+    printf("saved:\tcard[%d] %c:%d:%d,%d,%d,%d\n", stack->numCards,
+            (char)stack->deck[stack->numCards][COLOR], 
+            stack->deck[stack->numCards][POINTS],
+            stack->deck[stack->numCards][PU], 
+            stack->deck[stack->numCards][BR],
+            stack->deck[stack->numCards][YE],
+            stack->deck[stack->numCards][RE]);
 #endif
 
-    game->numCards++;
+    stack->numCards++;
     return OK;
 }
 
