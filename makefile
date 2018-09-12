@@ -1,5 +1,5 @@
 CC = gcc
-DEFAULT := -Wall -Wextra -Werror -pedantic -std=c99
+DEFAULT := -Wall -Wextra -Werror -pedantic -std=c99 -D_POSIX_C_SOURCE
 BUILD := test
 flags.test := -DTEST -g $(DEFAULT)
 flags.verbose := -DTEST -DVERBOSE -g $(DEFAULT)

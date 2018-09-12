@@ -14,7 +14,7 @@
 int check_pcount(char* input) {
     char* temp;
     long int pCount = strtol(input, &temp, 10);
-    if(pCount < 2 || pCount > UINT_MAX) {
+    if(pCount < 2 || pCount > INT_MAX) {
         return ERR;
     }
     return (int)pCount;
@@ -33,4 +33,17 @@ int check_pid(char* input, int pCount) {
         return ERR;
     }
     return (int)pID;
+}
+
+/*
+ * initializes game for players
+ * params:  pID - id of player from 0 to pCount
+ *          pCount - number of players in game
+ *          game - struct containing game relevant information
+ */
+void init_player_game(int pID, int pCount, Game* game) {
+    game->pID = pID;
+    game->pCount = pCount;
+    game->numPoints = 0;
+    game->numCards = 0;
 }

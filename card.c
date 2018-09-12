@@ -9,7 +9,7 @@
  */
 void print_card(Card card) {
     printf("print:\tcard %c:%d:%d,%d,%d,%d\n", (char)card[COLOR],
-            card[POINTS], card[PU], card[BR], card[YE],  card[RE]);
+            card[POINTS], card[PU], card[BR], card[YE], card[RE]);
 }
 
 /*

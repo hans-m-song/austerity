@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <limits.h>
+#include <signal.h>
 #include "err.h"
 #include "common.h"
 #include "card.h"
@@ -81,6 +82,16 @@ Error read_deck(FILE* deckFile, Stack* stack) {
 }
 
 /*
+ * reaps player processes
+ * params:  game - struct containing relevant game information
+ */
+void kill_players(int pCount, pid_t playerPID[]) {
+    for(int i = 0; i < pCount; i++) {
+        kill(playerPID[i], SIGKILL);
+    }
+}
+
+/*
  * starts the given players
  * params:  pCount - number of players to start
  *          players - array of player commands to exec
@@ -88,25 +99,27 @@ Error read_deck(FILE* deckFile, Stack* stack) {
  * returns: E_EXEC if any players did not start successfully,
  *          OK otherwise
  */
-Error start_players(char** players, Game* game) {
+Error start_players(char** players, pid_t* playerPID, Game* game) {
     for(int i = 0; i < game->pCount; i++) {
         char* pCount = to_string(game->pCount);
         char* pID = to_string(i);
         char* args[] = {players[i], pCount, pID, NULL};
-
 #ifdef TEST
         printf("exec:\t%s %s %s\n", args[0], args[1], args[2]);
 #endif
 
-        int pid = fork();
+        pid_t pid = fork();
         if(pid == ERR) { // failed to fork
-            // reap other players
+            // TODO reap other players, use wait()?
             return E_EXEC;
         } else if(pid == 0) { // child
-            // set up pipes
-            if(execv(args[0], args) == ERR) { // failed to exec
+            // TODO set up pipes
+            if(execvp(args[0], args) == ERR) { // failed to exec
                 return E_EXEC;
             }
+        } else { // parent
+            playerPID[i] = pid;
+            printf("exec'd child at %d\n", playerPID[i]);
         }
         free(pCount);
         free(pID);
@@ -132,8 +145,8 @@ Error init_game(int argc, char** argv, Game* game) {
     long int numTokens = strtol(argv[1], &temp, 10);
     long int numPoints = strtol(argv[2], &temp, 10);
 
-    if(!numTokens || numTokens < 0 || numTokens > UINT_MAX || 
-            !numPoints || numPoints < 0 || numPoints > UINT_MAX) {
+    if(!numTokens || numTokens < 0 || numTokens > INT_MAX || 
+            !numPoints || numPoints < 0 || numPoints > INT_MAX) {
         return E_ARGV;
     }
     game->numTokens = numTokens;
@@ -174,8 +187,10 @@ int main(int argc, char** argv) {
     }
 
     pid_t parentPID = getpid();
-    err = start_players(argv + 4, &game);
+    pid_t* playerPID = (pid_t*)malloc(sizeof(pid_t) * game.pCount);
+    err = start_players(argv + 4, playerPID, &game);
     if(err) {
+        kill_players(game.pCount, playerPID);
         herr_msg(E_EXEC);
         return E_EXEC;
     }
@@ -183,6 +198,7 @@ int main(int argc, char** argv) {
     err = play_game(&game, parentPID);
 
     shred_deck(game.stack.deck, game.stack.numCards);
+    free(playerPID);
     herr_msg(err);
     return err;
 }
