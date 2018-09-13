@@ -5,6 +5,7 @@
 
 typedef enum {
     EOG,
+    DOWHAT,
     TOKENS,
     NEWCARD,
     PURCHASED,
@@ -18,14 +19,19 @@ typedef enum {
 // message will be encoded/decoded depending on type
 typedef struct {
     Comm type;
-    int token;
+    char player;
+    int tokens;
     Card info;
+    int wild;
+    int card;
 } Msg;
 
-int encode(Msg* msg);
-
-int decode(Msg* msg);
-
 int send_msg(Msg* msg, int destination);
+
+int encode(Msg* msg, char* output);
+
+Comm decode_hub_msg(Msg* msg, char* input);
+
+Comm decode_player_msg(Msg* msg, char* input);
 
 #endif

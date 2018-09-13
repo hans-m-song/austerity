@@ -1,6 +1,8 @@
 #ifndef ERR_H
 #define ERR_H
 
+#define ERR -1
+
 // error codes for hub and player
 typedef enum {
     OK = 0,
@@ -11,14 +13,13 @@ typedef enum {
     E_DECKIO = 3,
     E_DECKR = 4,
     E_EXEC = 5,
-    E_PIPECLOSE = 6,
+    E_COMMERR = 6,
     E_DEADPLAYER = 6,
     E_PROTOCOL = 7,
-    E_SIGINT = 10,
-    ERR = -1 
+    E_SIGINT = 10
 } Error;
 
-void perr_msg(Error code, char* ptype);
+void perr_msg(Error code, int pType);
 
 void herr_msg(Error code);
 

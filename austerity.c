@@ -19,7 +19,7 @@
  *          E_SIGINT if sigint was caught
  *          OK otherwise for end of stack
  */
-Error play_game(Game* game, pid_t parentPID) {
+Error start_hub(Game* game, pid_t parentPID) {
     if(getpid() != parentPID) { // child
         exit(ERR);
     } else { // parent
@@ -30,6 +30,7 @@ Error play_game(Game* game, pid_t parentPID) {
         }
     }
     printf("parent playing game\n");
+    // do loop here probably
     return OK;
 }
 
@@ -195,7 +196,7 @@ int main(int argc, char** argv) {
         return E_EXEC;
     }
 
-    err = play_game(&game, parentPID);
+    err = start_hub(&game, parentPID);
 
     shred_deck(game.stack.deck, game.stack.numCards);
     free(playerPID);

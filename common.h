@@ -1,12 +1,12 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stdio.h>
 #include "card.h"
 
 #define IN 0
 #define OUT 1
-#define LINE_BUFF 20
-#define NAME_SIZE 10
+#define LINE_BUFF 50
 
 // struct containing information relevant to the game
 // for the hub, pID is unused, numPoints contains the winning number of points
@@ -24,6 +24,8 @@ typedef struct {
 } Game;
 
 char* to_string(int input);
+
+char* read_line(FILE* input);
 
 #endif
 

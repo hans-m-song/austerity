@@ -3,7 +3,9 @@
 #include <string.h>
 #include <limits.h>
 #include "err.h"
+#include "common.h"
 #include "playerCommon.h"
+#include "comms.h"
 
 /*
  * checks if the given string is valid
@@ -46,4 +48,59 @@ void init_player_game(int pID, int pCount, Game* game) {
     game->pCount = pCount;
     game->numPoints = 0;
     game->numCards = 0;
+}
+
+/*
+ * main driver for logic of players
+ * params:  game - struct containing game relevant information
+ *          move - function pointer to the player-specific move logic
+ * returns: E_COMMERR if bad message received,
+ *          OK otherwise for end of game
+ */
+Error play_game(Game* game, char* (*playerMove)(Game*)) {
+    Error err = E_COMMERR;
+    char* line;
+    Msg msg; 
+    while(1) {
+        line = read_line(stdin);
+
+        if(decode_hub_msg(&msg, line) < 0) {
+            err = E_COMMERR;
+            break;
+        }
+        
+        switch(msg.type) {
+            case EOG:
+                free(line);
+                return OK;
+            case DOWHAT:
+                ;
+                char* move = playerMove(game);
+                printf("playerMove: %s\n", move);
+                // encode();
+                // send(msg);
+                break;
+            case TOKENS:
+                break;
+            case NEWCARD:
+                // TODO add_card();
+                free(msg.info);
+                break;
+            case PURCHASED:
+                // TODO remove_card();
+                free(msg.info);
+                break;
+            case TOOK:
+                // TODO update_tokens();
+                free(msg.info);
+                break;
+            case WILD:
+                // TODO update_tokens();
+                break;
+            default:
+                free(line);
+                return E_COMMERR;
+        }
+    }
+    return err;
 }

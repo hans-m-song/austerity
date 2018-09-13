@@ -103,3 +103,17 @@ void shred_deck(Deck deck, int numCards) {
 #endif
 }
 
+/*
+ * saves the new card information to the given pointer
+ * params:  card - struct to save card details to
+ *          color, points, purple, brown, yellow, red - card details
+ */
+void new_card(Card* card, char color, int points, 
+        int purple, int brown, int yellow, int red) {
+    *card[COLOR] = (int)color;
+    *card[POINTS] = points;
+    *card[PU] = purple;
+    *card[BR] = brown;
+    *card[YE] = yellow;
+    *card[RE] = red;
+}

@@ -1,19 +1,18 @@
 CC = gcc
-DEFAULT := -Wall -Wextra -Werror -pedantic -std=c99 -D_POSIX_C_SOURCE
+DEFAULT := -Wall -Wextra -pedantic -std=c99
 BUILD := test
 flags.test := -DTEST -g $(DEFAULT)
 flags.verbose := -DTEST -DVERBOSE -g $(DEFAULT)
-flags.release := $(DEFAULT)
+flags.release := $(DEFAULT) -Werror
 FLAGS := $(flags.$(BUILD))
-OBJ = err.o comms.o common.o card.o playerCommon.o
+OBJ = err.o card.o common.o comms.o playerCommon.o
 #token.o 
 
 all: aus shen ban ed 
 	@echo BUILD=$(BUILD)
-#ban ed shen
 
 aus: $(OBJ) 
-	$(CC) $(FLAGS) $(OBJ) austerity.c -o austerity
+	$(CC) -D_POSIX_C_SOURCE $(FLAGS) $(OBJ) austerity.c -o austerity
 
 ban: $(OBJ)
 	$(CC) $(FLAGS) $(OBJ) banzai.c -o banzai
@@ -24,10 +23,10 @@ ed: $(OBJ)
 shen: $(OBJ)
 	$(CC) $(FLAGS) $(OBJ) shenzi.c -o shenzi
 
-test: 
+try: aus shen 
 	valgrind --leak-check=full ./austerity 1 1 deck2 ./shenzi ./shenzi
 
-e:
+test:
 	$(CC) $(DEFAULT) test.c -o test
 
 %.o: %.c

@@ -7,12 +7,13 @@
  * params:  code - a number corresponding to an game ending error
  *          ptype - a string representing the type of player
  */
-void perr_msg(Error code, char* ptype) {
+void perr_msg(Error code, int pType) {
+    char* players[] = {"shenzi", "banzai", "ed"};
     switch(code) {
         case OK:
             return;
         case E_ARGC:
-            fprintf(stderr, "Usage: %s pcount myid\n", ptype);
+            fprintf(stderr, "Usage: %s pcount myid\n", players[pType]);
             break;
         case E_PCOUNT:
             fprintf(stderr, "Invalid player count\n");
@@ -20,11 +21,13 @@ void perr_msg(Error code, char* ptype) {
         case E_PID:
             fprintf(stderr, "Invalid player ID\n");
             break;
-        case E_PIPECLOSE:
+        case E_COMMERR:
             fprintf(stderr, "Communication Error\n");
             break;
         default:
+#ifdef TEST
             fprintf(stderr, "got invalid code: %d\n", code);
+#endif
             break;
     }
 }
@@ -64,7 +67,9 @@ void herr_msg(Error code) {
             fprintf(stderr, "SIGINT caught\n");
             break;
         default:
+#ifdef TEST
             fprintf(stderr, "got invalid code: %d\n", code);
+#endif
             break;
     }
 }
