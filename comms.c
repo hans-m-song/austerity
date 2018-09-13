@@ -18,10 +18,56 @@ int send_msg(Msg* msg, int destination);
  * encodes a message and saves it into the given output
  * params:  msg - struct containing message details
  *          output - string containing encoded message
- * returns: ERR if invalid contents,
- *          OK otherwise
+ * returns: NULL if invalid contents,
+ *          string containing encoded message otherwise
  */
-int encode(Msg* msg, char* output);
+char* encode_hub(Msg* msg) {
+    char* output = (char*)malloc(sizeof(char) * LINE_BUFF);
+    switch(msg->type) {
+        case EOG:
+            strcpy(output, "eog");
+            break;
+        case DOWHAT:
+            strcpy(output, "dowhat");
+            break;
+        case TOKENS:
+            strcpy(output, "tokens");
+            char* tokens = to_string(msg->tokens);
+            strcat(output, tokens);
+            free(tokens);
+            break;
+        case NEWCARD:
+            strcpy(output, "newcard");
+            char* card = card_to_string(msg->info);
+            strcat(output, card);
+            free(card);
+            break;
+        case PURCHASED:
+            output[0] = msg->player;
+            output[1] = '\0';
+            char* temp = to_string(msg->card);
+            strcat(output, temp);
+            free(temp);
+            for(int i = PURPLE; i < CARD_SIZE; i++) {
+                char* temp = to_string(msg->info[i]);
+                strcat(output, temp);
+                free(temp);
+            }
+            break;
+        case WILD:
+            strcpy(output, "wild");
+            char player[2] = {msg->player, '\0'};
+            strcat(output, player);
+            break;
+        default:
+            free(output);
+            return NULL;
+    }
+
+    return output;
+}
+
+char* encode_player(Msg* msg);
 
 /*
  * decodes a message from the hub and saves it to the given message struct

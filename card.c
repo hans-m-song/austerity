@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "err.h"
 #include "card.h"
+#include "common.h"
 
 /*
  * prints the given card
@@ -9,7 +11,7 @@
  */
 void print_card(Card card) {
     printf("print:\tcard %c:%d:%d,%d,%d,%d\n", (char)card[COLOR],
-            card[POINTS], card[PU], card[BR], card[YE], card[RE]);
+            card[POINTS], card[PURPLE], card[BROWN], card[YELLOW], card[RED]);
 }
 
 /*
@@ -31,7 +33,7 @@ void print_deck(Deck deck, int numCards) {
  *          color - color of card
  *          points - amount of points card is worth
  *          purple, brown, yellow, red - respective token values
- * returns: ERR if malloc fails (stack will still end with E_CARDR,
+ * returns: ERR if malloc fails,
  *          OK otherwise
  */
 Error add_card(Stack* stack, char color, int points, 
@@ -59,19 +61,19 @@ Error add_card(Stack* stack, char color, int points,
     }
     stack->deck[stack->numCards][COLOR] = (int)color;
     stack->deck[stack->numCards][POINTS] = points;
-    stack->deck[stack->numCards][PU] = purple;
-    stack->deck[stack->numCards][BR] = brown;
-    stack->deck[stack->numCards][YE] = yellow;
-    stack->deck[stack->numCards][RE] = red;
+    stack->deck[stack->numCards][PURPLE] = purple;
+    stack->deck[stack->numCards][BROWN] = brown;
+    stack->deck[stack->numCards][YELLOW] = yellow;
+    stack->deck[stack->numCards][RED] = red;
 
 #ifdef TEST 
     printf("saved:\tcard[%d] %c:%d:%d,%d,%d,%d\n", stack->numCards,
             (char)stack->deck[stack->numCards][COLOR], 
             stack->deck[stack->numCards][POINTS],
-            stack->deck[stack->numCards][PU], 
-            stack->deck[stack->numCards][BR],
-            stack->deck[stack->numCards][YE],
-            stack->deck[stack->numCards][RE]);
+            stack->deck[stack->numCards][PURPLE], 
+            stack->deck[stack->numCards][BROWN],
+            stack->deck[stack->numCards][YELLOW],
+            stack->deck[stack->numCards][RED]);
 #endif
 
     stack->numCards++;
@@ -112,8 +114,32 @@ void new_card(Card* card, char color, int points,
         int purple, int brown, int yellow, int red) {
     *card[COLOR] = (int)color;
     *card[POINTS] = points;
-    *card[PU] = purple;
-    *card[BR] = brown;
-    *card[YE] = yellow;
-    *card[RE] = red;
+    *card[PURPLE] = purple;
+    *card[BROWN] = brown;
+    *card[YELLOW] = yellow;
+    *card[RED] = red;
+}
+
+/*
+ * converts the given card to string format
+ * params:  card - struct containing card information
+ * returns: string containing card details
+ */
+char* card_to_string(Card card) {
+    char* output = (char*)malloc(sizeof(char) * LINE_BUFF);
+    char color[3] = {(char)card[0], ':', '\0'};
+    strcpy(output, color);
+    char* temp = to_string(card[1]);
+    strcat(output, temp);
+    strcat(output, ":");
+    for(int i = PURPLE; i < CARD_SIZE; i++) {
+        char* temp = to_string(card[i]); 
+        strcat(output, temp);
+        free(temp);
+        if(i < RED) {
+            strcat(output, ",");
+        }
+    }
+
+    return output;
 }

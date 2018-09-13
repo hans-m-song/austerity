@@ -26,11 +26,16 @@ Error start_hub(Game* game, pid_t parentPID) {
         for(int i = 0; i < game->pCount; i++) {
             int status;
             wait(&status);
+
+#ifdef TEST
             printf("child %d returned %d\n", i, status);
+#endif
         }
     }
     printf("parent playing game\n");
     // do loop here probably
+    // for(int i = 0; i < game->numCards, i < 8; i++)
+    //      newcard
     return OK;
 }
 
@@ -88,6 +93,9 @@ Error read_deck(FILE* deckFile, Stack* stack) {
  */
 void kill_players(int pCount, pid_t playerPID[]) {
     for(int i = 0; i < pCount; i++) {
+        // send eog
+        // wait 2 seconds
+        // if not dead,
         kill(playerPID[i], SIGKILL);
     }
 }
@@ -116,11 +124,11 @@ Error start_players(char** players, pid_t* playerPID, Game* game) {
         } else if(pid == 0) { // child
             // TODO set up pipes
             if(execvp(args[0], args) == ERR) { // failed to exec
+                // check FD_CLOEXEC
                 return E_EXEC;
             }
         } else { // parent
             playerPID[i] = pid;
-            printf("exec'd child at %d\n", playerPID[i]);
         }
         free(pCount);
         free(pID);

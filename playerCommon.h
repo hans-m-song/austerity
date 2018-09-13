@@ -16,6 +16,6 @@ void init_player_game(int pID, int pCount, Game* game);
 
 void player_status(Comm type, char* winners);
 
-Error play_game(Game* game, char* (*playerMove)(Game*));
+Error play_game(Game* game, Msg* (*playerMove)(Game*));
 
 #endif

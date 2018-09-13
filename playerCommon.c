@@ -16,7 +16,7 @@
 int check_pcount(char* input) {
     char* temp;
     long int pCount = strtol(input, &temp, 10);
-    if(pCount < 2 || pCount > INT_MAX) {
+    if(pCount < 2 || pCount > 26) {
         return ERR;
     }
     return (int)pCount;
@@ -50,6 +50,10 @@ void init_player_game(int pID, int pCount, Game* game) {
     game->numCards = 0;
 }
 
+void send_move() {//Game* game, Msg* msg) {
+    ;
+}
+
 /*
  * main driver for logic of players
  * params:  game - struct containing game relevant information
@@ -57,14 +61,14 @@ void init_player_game(int pID, int pCount, Game* game) {
  * returns: E_COMMERR if bad message received,
  *          OK otherwise for end of game
  */
-Error play_game(Game* game, char* (*playerMove)(Game*)) {
+Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
     Error err = E_COMMERR;
     char* line;
     Msg msg; 
     while(1) {
         line = read_line(stdin);
 
-        if(decode_hub_msg(&msg, line) < 0) {
+        if(!line || decode_hub_msg(&msg, line) < 0) {
             err = E_COMMERR;
             break;
         }
@@ -74,16 +78,14 @@ Error play_game(Game* game, char* (*playerMove)(Game*)) {
                 free(line);
                 return OK;
             case DOWHAT:
-                ;
-                char* move = playerMove(game);
-                printf("playerMove: %s\n", move);
-                // encode();
-                // send(msg);
+                send_move(game, playerMove(game));
                 break;
             case TOKENS:
                 break;
             case NEWCARD:
-                // TODO add_card();
+                add_card(&game->stack, msg.info[COLOR], msg.info[POINTS], 
+                        msg.info[PURPLE], msg.info[BROWN], 
+                        msg.info[YELLOW], msg.info[RED]);
                 free(msg.info);
                 break;
             case PURCHASED:

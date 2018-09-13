@@ -21,7 +21,7 @@
  * params:  game - struct containing game relevant information
  * returns: 
  */
-char* shenzi_move(Game* game) {
+Msg* shenzi_move(Game* game) {
     //1. buy card with most points (if enough tokens)
     //  a. smallest cost
     //  b. most recent
@@ -32,7 +32,9 @@ char* shenzi_move(Game* game) {
     //  d. red
     //3. take wild
     printf("shenzi[%d] move\n", game->pID);
-    return "test";
+    Msg* msg = (Msg*)malloc(sizeof(Msg));
+    msg->type = DOWHAT;
+    return msg;
 }
 
 int main(int argc, char** argv) {

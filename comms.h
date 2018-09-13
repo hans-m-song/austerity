@@ -28,7 +28,9 @@ typedef struct {
 
 int send_msg(Msg* msg, int destination);
 
-int encode(Msg* msg, char* output);
+char* encode_hub(Msg* msg);
+
+char* encode_player(Msg* msg);
 
 Comm decode_hub_msg(Msg* msg, char* input);
 

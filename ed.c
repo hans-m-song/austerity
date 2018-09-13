@@ -5,8 +5,14 @@
 #include "common.h"
 #include "playerCommon.h"
 #include "comms.h"
+#include "card.h"
 
-int ed_move(Game* game);
+Msg* ed_move(Game* game) {
+    printf("ed[%d] move\n", game->pID);
+    Msg* msg = (Msg*)malloc(sizeof(Msg));
+    msg->type = DOWHAT;
+    return msg;
+}
 
 int main(int argc, char** argv) {
     if(argc != 3) {
@@ -30,6 +36,11 @@ int main(int argc, char** argv) {
     printf("ed[%d] launched successfully\n", pID);
 #endif
 
-    Error err = OK;
+    Game game;
+    init_player_game(pID, pCount, &game);
+
+    Error err = play_game(&game, &ed_move);
+    
+    perr_msg(err, ED); 
     return err;
 }

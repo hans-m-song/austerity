@@ -23,7 +23,7 @@ ed: $(OBJ)
 shen: $(OBJ)
 	$(CC) $(FLAGS) $(OBJ) shenzi.c -o shenzi
 
-try: aus shen 
+try: 
 	valgrind --leak-check=full ./austerity 1 1 deck2 ./shenzi ./shenzi
 
 test:

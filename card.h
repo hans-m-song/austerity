@@ -7,12 +7,12 @@
 #define CARD_SIZE 6
 
 // card fields
-#define COLOR 0     // color
-#define POINTS 1    // points
-#define PU 2        // purple
-#define BR 3        // brown
-#define YE 4        // yellow
-#define RE 5        // red
+#define COLOR 0
+#define POINTS 1
+#define PURPLE 2
+#define BROWN 3
+#define YELLOW 4
+#define RED 5
 
 typedef int* Card;
 typedef Card* Deck;
@@ -29,9 +29,13 @@ void print_deck(Deck deck, int numCards);
 Error add_card(Stack* stack, char color, int points,
         int purple, int brown, int yellow, int red);
 
+Error remove_card(Stack* stack, Card card);
+
 void shred_deck(Deck deck, int numCards);
 
 void new_card(Card* card, char color, int points, 
         int purple, int brown, int yellow, int red);
+
+char* card_to_string(Card card);
 
 #endif
