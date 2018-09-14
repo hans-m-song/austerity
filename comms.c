@@ -67,7 +67,16 @@ char* encode_hub(Msg* msg) {
     return output;
 }
 
-char* encode_player(Msg* msg);
+/*
+ * encodes a message and saves it into the given output
+ * params:  msg - struct containing message details
+ *          output - string containing encoded message
+ * returns: NULL if invalid contents,
+ *          string containing encoded message otherwise
+ */
+char* encode_player() { //Msg* msg) {
+    return "test";
+}
 
 /*
  * decodes a message from the hub and saves it to the given message struct
@@ -77,7 +86,8 @@ char* encode_player(Msg* msg);
  *          ERR if invalid contents
  */
 Comm decode_hub_msg(Msg* msg, char* input) {
-    char player, color, end;
+    char player, color;
+    char end = '\0';
     int tokens, points, purple, brown, yellow, red, wild, card;
     
 #ifdef TEST
@@ -89,7 +99,7 @@ Comm decode_hub_msg(Msg* msg, char* input) {
     } else if(strcmp(input, "dowhat") == OK) {
         msg->type = DOWHAT;
     } else if(sscanf(input, "wild%c%c", &player, &end) == 1 && !end) {
-        // TODO check validity
+        printf("got wild\n");
         msg->type = WILD;
         msg->player = player;
     } else if(sscanf(input, "tokens%d%c", &tokens, &end) == 1 && !end) {
@@ -100,25 +110,27 @@ Comm decode_hub_msg(Msg* msg, char* input) {
         if(sscanf(input, "newcard%c:%d:%d,%d,%d,%d,%c", &color, &points, 
                 &purple, &brown, &yellow, &red, &end) == 6 && !end) {
             msg->type = NEWCARD;
-            new_card(&msg->info, color, points, purple, brown, yellow, red);
+            save_info(msg->info, color, points, purple, brown, yellow, red);
         } else if(sscanf(input, "purchased%c:%d:%d,%d,%d,%d,%d%c", &player, 
                 &card, &purple, &brown, &yellow, &red, &wild, &end) == 6 && 
                 !end) {
             msg->type = PURCHASED;
             msg->player = player;
             msg->card = card;
-            new_card(&msg->info, (char)0, 0, purple, brown, yellow, red);
+            save_info(msg->info, (char)0, 0, purple, brown, yellow, red);
             msg->wild = wild;
         } else if(sscanf(input, "took%c:%d,%d,%d,%d%c", &player, 
                 &purple, &brown, &yellow, &red, &end) == 5 && !end) {
             msg->type = TOOK;
             msg->player = player;
-            new_card(&msg->info, (char)0, 0, purple, brown, yellow, red);
+            save_info(msg->info, (char)0, 0, purple, brown, yellow, red);
         } else {
+            free(input);
             return ERR;
         }
     }
 
+    free(input);
     return msg->type;
 }
 
@@ -142,17 +154,19 @@ Comm decode_player_msg(Msg* msg, char* input) {
     } else if(sscanf(input, "purchase%d:%d,%d,%d,%d,%d%c", &card, 
             &purple, &brown, &yellow, &red, &wild, &end) == 6 && !end) {
         msg->type = PURCHASE;
-        new_card(&msg->info, (char)0, 0, purple, brown, yellow, red);
+        save_info(msg->info, (char)0, 0, purple, brown, yellow, red);
         msg->wild = wild;
         msg->card = card;
     } else if(sscanf(input, "take%d,%d,%d,%d%c", 
             &purple, &brown, &yellow, &red, &end) == 4 && !end) {
         msg->type = TAKE;
-        new_card(&msg->info, (char)0, 0, purple, brown, yellow, red);
+        save_info(msg->info, (char)0, 0, purple, brown, yellow, red);
     } else {
+        free(input);
         return ERR;
     }
 
+    free(input);
     return msg->type;
 }
 

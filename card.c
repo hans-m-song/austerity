@@ -4,6 +4,7 @@
 #include "err.h"
 #include "card.h"
 #include "common.h"
+#include "comms.h"
 
 /*
  * prints the given card
@@ -106,18 +107,18 @@ void shred_deck(Deck deck, int numCards) {
 }
 
 /*
- * saves the new card information to the given pointer
+ * saves the information about tokens from the message 
  * params:  card - struct to save card details to
  *          color, points, purple, brown, yellow, red - card details
  */
-void new_card(Card* card, char color, int points, 
+void save_info(Card card, char color, int points, 
         int purple, int brown, int yellow, int red) {
-    *card[COLOR] = (int)color;
-    *card[POINTS] = points;
-    *card[PURPLE] = purple;
-    *card[BROWN] = brown;
-    *card[YELLOW] = yellow;
-    *card[RED] = red;
+    card[COLOR] = (int)color;
+    card[POINTS] = points;
+    card[PURPLE] = purple;
+    card[BROWN] = brown;
+    card[YELLOW] = yellow;
+    card[RED] = red;
 }
 
 /*

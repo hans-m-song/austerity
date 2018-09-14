@@ -19,7 +19,7 @@
 /*
  * determines the next move to take for shenzi
  * params:  game - struct containing game relevant information
- * returns: 
+ * returns: msg containing move for this player
  */
 Msg* shenzi_move(Game* game) {
     //1. buy card with most points (if enough tokens)
@@ -55,15 +55,14 @@ int main(int argc, char** argv) {
         return E_PID;
     }
 
-#ifdef TEST
-    printf("shenzi[%d] launched successfully\n", pID);
-#endif
-
     Game game;
     init_player_game(pID, pCount, &game);
 
     Error err = play_game(&game, &shenzi_move);
     
+    if(game.stack.numCards) {
+        shred_deck(game.stack.deck, game.stack.numCards);
+    }
     perr_msg(err, SHENZI); 
     return err;
 }

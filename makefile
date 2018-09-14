@@ -1,5 +1,5 @@
 CC = gcc
-DEFAULT := -Wall -Wextra -pedantic -std=c99
+DEFAULT := -Wall -Wextra -pedantic -std=gnu99
 BUILD := test
 flags.test := -DTEST -g $(DEFAULT)
 flags.verbose := -DTEST -DVERBOSE -g $(DEFAULT)
@@ -12,7 +12,7 @@ all: aus shen ban ed
 	@echo BUILD=$(BUILD)
 
 aus: $(OBJ) 
-	$(CC) -D_POSIX_C_SOURCE $(FLAGS) $(OBJ) austerity.c -o austerity
+	$(CC) $(FLAGS) $(OBJ) austerity.c -o austerity
 
 ban: $(OBJ)
 	$(CC) $(FLAGS) $(OBJ) banzai.c -o banzai

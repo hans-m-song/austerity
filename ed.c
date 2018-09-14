@@ -7,6 +7,11 @@
 #include "comms.h"
 #include "card.h"
 
+/*
+ * determines the next move to take for ed 
+ * params:  game - struct containing game relevant information
+ * returns: msg containing move for this player
+ */
 Msg* ed_move(Game* game) {
     printf("ed[%d] move\n", game->pID);
     Msg* msg = (Msg*)malloc(sizeof(Msg));
@@ -31,10 +36,6 @@ int main(int argc, char** argv) {
         perr_msg(E_PID, ED);
         return E_PID;
     }
-
-#ifdef TEST
-    printf("ed[%d] launched successfully\n", pID);
-#endif
 
     Game game;
     init_player_game(pID, pCount, &game);

@@ -47,11 +47,20 @@ void init_player_game(int pID, int pCount, Game* game) {
     game->pID = pID;
     game->pCount = pCount;
     game->numPoints = 0;
-    game->numCards = 0;
+    game->stack.numCards = 0;
 }
 
-void send_move() {//Game* game, Msg* msg) {
-    ;
+/*
+ * TODO encodes a message and sends it to the given destination
+ * params:  msg - message to encode
+ *          destination - where to send the message to
+ */
+void send_move(Msg* msg) {
+    char* encodedMsg = encode_player(msg);
+    // send msg
+#ifdef TEST
+    printf("send:\t%s\n", encodedMsg);
+#endif
 }
 
 /*
@@ -67,18 +76,19 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
     Msg msg; 
     while(1) {
         line = read_line(stdin);
-
-        if(!line || decode_hub_msg(&msg, line) < 0) {
-            err = E_COMMERR;
+        if(!line) {
+            break;
+        }
+            
+        if((int)decode_hub_msg(&msg, line) == ERR) {
             break;
         }
         
         switch(msg.type) {
             case EOG:
-                free(line);
                 return OK;
             case DOWHAT:
-                send_move(game, playerMove(game));
+                send_move(playerMove(game));
                 break;
             case TOKENS:
                 break;
@@ -100,7 +110,6 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
                 // TODO update_tokens();
                 break;
             default:
-                free(line);
                 return E_COMMERR;
         }
     }

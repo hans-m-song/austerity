@@ -33,7 +33,7 @@ Error remove_card(Stack* stack, Card card);
 
 void shred_deck(Deck deck, int numCards);
 
-void new_card(Card* card, char color, int points, 
+void save_info(Card card, char color, int points, 
         int purple, int brown, int yellow, int red);
 
 char* card_to_string(Card card);

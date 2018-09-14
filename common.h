@@ -19,7 +19,6 @@ typedef struct {
     int pCount;
     int numTokens;
     int numPoints;
-    int numCards;
     Stack stack;
 } Game;
 

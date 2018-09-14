@@ -7,6 +7,11 @@
 #include "comms.h"
 #include "card.h"
 
+/*
+ * determines the next move to take for banzai 
+ * params:  game - struct containing game relevant information
+ * returns: msg containing move for this player
+ */
 Msg* banzai_move(Game* game) {
     printf("banzai[%d] move\n", game->pID);
     Msg* msg = (Msg*)malloc(sizeof(Msg));
@@ -31,10 +36,6 @@ int main(int argc, char** argv) {
         perr_msg(E_PID, BANZAI);
         return E_PID;
     }
-
-#ifdef TEST
-    printf("banzai[%d] launched successfully\n", pID);
-#endif
 
     Game game;
     init_player_game(pID, pCount, &game);

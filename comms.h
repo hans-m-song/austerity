@@ -30,7 +30,7 @@ int send_msg(Msg* msg, int destination);
 
 char* encode_hub(Msg* msg);
 
-char* encode_player(Msg* msg);
+char* encode_player();//Msg* msg);
 
 Comm decode_hub_msg(Msg* msg, char* input);
 
