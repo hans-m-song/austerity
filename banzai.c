@@ -8,7 +8,7 @@
 #include "card.h"
 
 /*
- * determines the next move to take for banzai 
+ * TODO banzai_move determines the next move to take for banzai 
  * params:  game - struct containing game relevant information
  * returns: msg containing move for this player
  */
@@ -41,7 +41,13 @@ int main(int argc, char** argv) {
     init_player_game(pID, pCount, &game);
 
     Error err = play_game(&game, &banzai_move);
+    if(err == UTIL) {
+        err = OK;
+    }
     
+    if(game.stack.numCards) {
+        shred_deck(game.stack.deck, game.stack.numCards);
+    }
     perr_msg(err, BANZAI); 
     return err;
 }

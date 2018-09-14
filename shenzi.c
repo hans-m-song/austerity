@@ -17,7 +17,7 @@
 // end loop
 
 /*
- * determines the next move to take for shenzi
+ * TODO shenzi_move determines the next move to take for shenzi
  * params:  game - struct containing game relevant information
  * returns: msg containing move for this player
  */
@@ -33,7 +33,25 @@ Msg* shenzi_move(Game* game) {
     //3. take wild
     printf("shenzi[%d] move\n", game->pID);
     Msg* msg = (Msg*)malloc(sizeof(Msg));
-    msg->type = DOWHAT;
+    int biggestCard = -1;
+    int lowestCost = -1;
+    for(int i = 0; i < game->stack.numCards; i++) {
+        // TODO look for valid cards
+        // msg->type = PURCHASE;
+    }
+
+    int tokenOrder[] = {PURPLE - 2, BROWN - 2, YELLOW - 2, RED - 2};
+    int* tokens = get_tokens(game->tokens, tokenOrder);
+    if(tokens) {
+        msg->type = TAKE;
+        msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
+        for(int i = PURPLE; i < CARD_SIZE; i++) {
+            msg->info[i] = tokens[i - 2];
+        }
+        free(tokens);
+    } else {
+        msg->type = WILD;
+    }
     return msg;
 }
 

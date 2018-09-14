@@ -18,4 +18,6 @@ void player_status(Comm type, char* winners);
 
 Error play_game(Game* game, Msg* (*playerMove)(Game*));
 
+int* get_tokens(int tokens[TOKEN_SIZE], int tokenOrder[TOKEN_SIZE]);
+
 #endif

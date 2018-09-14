@@ -38,4 +38,6 @@ void save_info(Card card, char color, int points,
 
 char* card_to_string(Card card);
 
+Error read_deck(FILE* deckFile, Stack* stack);
+
 #endif

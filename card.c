@@ -173,3 +173,51 @@ char* card_to_string(Card card) {
     return output;
 }
 
+/*
+ * checks contents of deck and saves to memory
+ * params:  deckFile - file containing deck
+ *          stack - struct containing relevant stack information
+ * returns: ERR if invalid contents,
+ *          OK otherwise
+ */
+Error read_deck(FILE* deckFile, Stack* stack) {
+    Error err = OK;
+    char* line = (char*)malloc(sizeof(char) * LINE_BUFF);
+    while(1) {
+        if(fgets(line, LINE_BUFF, deckFile) == NULL) {
+            if(!stack->numCards) {
+                err = ERR;
+            }
+            break;
+        }
+      
+        char color, end;
+        int res, points, purple, brown, yellow, red;
+        res = sscanf(line, "%c:%d:%d,%d,%d,%d%c", 
+                &color, &points, &purple, &brown, &yellow, &red, &end);
+        char* validColors = "PBYR";
+        if(res != 7 || end != '\n' || strspn(&color, validColors) != 1 || 
+                points < 0 || purple < 0 || brown < 0 || yellow < 0 || 
+                red < 0) {
+            err = ERR;
+            break;
+        }
+        
+#ifdef VERBOSE 
+        printf("fgets:\t%s", line);
+#endif
+
+        if(add_card(stack, color, points, 
+                purple, brown, yellow, red) != OK) {
+            return ERR;
+        }
+    }
+    free(line);
+
+#ifdef TEST
+    printf("got:\t%d cards\n", stack->numCards);
+#endif
+
+    return err;
+}
+

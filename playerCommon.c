@@ -52,17 +52,14 @@ void init_player_game(int pID, int pCount, Game* game) {
 }
 
 /*
- * TODO encodes a message and sends it to the given destination
+ * TODO send_move? encodes a message and sends it to the given destination
  * params:  msg - message to encode
  *          destination - where to send the message to
  */
 void send_move(Msg* msg) {
-    char* encodedMsg = (char*)malloc(sizeof(char) * LINE_BUFF);
-    strcpy(encodedMsg, encode_player(msg));
-    // send msg
-#ifdef TEST
-    printf("send:\t%s\n", encodedMsg);
-#endif
+    char* encodedMsg = encode_player(msg);
+    printf("%s\n", encodedMsg);
+    free(encodedMsg);
 }
 
 /*
@@ -82,7 +79,8 @@ Error newcard(Game* game, Msg* msg) {
  * sets the initial values of the tokens
  * params:  game - struct containing relevang game information
  *          numTokens - number to set tokens to
- * returns: 
+ * returns: Err if invalid token number,
+ *          OK otherwise
  */
 Error set_tokens(Game* game, int numTokens) {
     if(numTokens < 0 || numTokens > INT_MAX) {
@@ -169,4 +167,39 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
     }
     free(msg.info);
     return err;
+}
+
+// TODO get_tokens checks if tokens are valid
+// if valid, takes them in the given order
+// params:  tokens - array of available tokens
+//          tokenOrder - order in which to prefer tokens
+// returns: NULL if no tokens taken,
+//          otherwise, an array of which tokens were taken
+int* get_tokens(int tokens[TOKEN_SIZE], int tokenOrder[TOKEN_SIZE]) {
+    int availableTokens = 0;
+    for(int i = 0; i < TOKEN_SIZE; i++) {
+        if(tokens[i] > 0) {
+            availableTokens++;
+        }
+    }
+
+    if(availableTokens < 3) {
+        return NULL;
+    }
+
+    int tokenCount = 0;
+    int* takenTokens = (int*)malloc(sizeof(int) * TOKEN_SIZE);
+    for(int i = 0; i < TOKEN_SIZE && tokenCount < 3; i++) {
+        // TODO take tokens
+        if(takenTokens[tokenOrder[i]] > 0) {
+            takenTokens[tokenOrder[i]]--;
+            tokenCount++;
+            takenTokens[tokenOrder[i]] = 1;
+        } else {
+            takenTokens[tokenOrder[i]] = 0;
+        }
+    }
+
+    return takenTokens;
+    
 }
