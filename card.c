@@ -96,7 +96,7 @@ Error remove_card(Stack* stack, int card) {
     if(card != stack->numCards - 1) {
         for(int i = card; i < stack->numCards - 1; i++) {
             for(int j = 0; j < CARD_SIZE; j++) {
-#ifdef TEST
+#ifdef VERBOSE 
                 printf("%d:%d, %d <- %d\n", i, j, 
                         stack->deck[i][j], stack->deck[i + 1][j]);
 #endif

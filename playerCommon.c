@@ -57,11 +57,66 @@ void init_player_game(int pID, int pCount, Game* game) {
  *          destination - where to send the message to
  */
 void send_move(Msg* msg) {
-    char* encodedMsg = encode_player(msg);
+    char* encodedMsg = (char*)malloc(sizeof(char) * LINE_BUFF);
+    strcpy(encodedMsg, encode_player(msg));
     // send msg
 #ifdef TEST
     printf("send:\t%s\n", encodedMsg);
 #endif
+}
+
+/*
+ * adds the information about the card from the message to the stack
+ * params:  game - struct containing relevang game information
+ *          msg - struct containing information from the hub
+ * returns: ERR if addcard fails,
+ *          OK otherwise
+ */
+Error newcard(Game* game, Msg* msg) {
+    return add_card(&game->stack, msg->info[COLOR], msg->info[POINTS], 
+            msg->info[PURPLE], msg->info[BROWN], 
+            msg->info[YELLOW], msg->info[RED]);
+}
+
+/*
+ * sets the initial values of the tokens
+ * params:  game - struct containing relevang game information
+ *          numTokens - number to set tokens to
+ * returns: 
+ */
+Error set_tokens(Game* game, int numTokens) {
+    if(numTokens < 0 || numTokens > INT_MAX) {
+        return ERR;
+    }
+
+    for(int i = 0; i < TOKEN_SIZE; i++) {
+        game->tokens[i] = numTokens;
+    }
+
+    return OK;
+}
+
+/*
+ * sets the current values of the tokens
+ * params:  game - struct containing relevang game information
+ *          purple, brown, yellow, red - values to update tokens to
+ * returns: ERR if invalid token number,
+ *          OK otherwise
+ */
+Error update_tokens(Game* game, Card card) {
+    if(card[PURPLE] < 0 || card[PURPLE] > INT_MAX || 
+            card[BROWN] < 0 || card[BROWN] > INT_MAX || 
+            card[YELLOW] < 0 || card[YELLOW] > INT_MAX || 
+            card[RED] < 0 || card[RED] > INT_MAX) {
+        return ERR;
+    }
+
+    game->tokens[0] = card[PURPLE];
+    game->tokens[1] = card[BROWN];
+    game->tokens[2] = card[YELLOW];
+    game->tokens[3] = card[RED];
+    
+    return OK;
 }
 
 /*
@@ -95,21 +150,18 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
                 send_move(playerMove(game));
                 break;
             case TOKENS:
+                err = set_tokens(game, msg.tokens);
                 break;
             case NEWCARD:
-                err = add_card(&game->stack, 
-                        msg.info[COLOR], msg.info[POINTS], 
-                        msg.info[PURPLE], msg.info[BROWN], 
-                        msg.info[YELLOW], msg.info[RED]);
+                err = newcard(game, &msg);
                 break;
             case PURCHASED:
                 err = remove_card(&game->stack, msg.card);
                 break;
             case TOOK:
-                // TODO update_tokens();
+                err = update_tokens(game, msg.info);
                 break;
             case WILD:
-                // TODO update_tokens();
                 break;
             default:
                 err = E_COMMERR;

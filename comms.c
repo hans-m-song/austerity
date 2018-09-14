@@ -94,7 +94,6 @@ Comm decode_hub_msg(Msg* msg, char* input) {
     } else if(strcmp(input, "dowhat") == OK) {
         msg->type = DOWHAT;
     } else if(sscanf(input, "wild%c%c", &player, &end) == 1 && !end) {
-        printf("got wild\n");
         msg->type = WILD;
         msg->player = player;
     } else if(sscanf(input, "tokens%d%c", &tokens, &end) == 1 && !end) {

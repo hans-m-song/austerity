@@ -154,12 +154,14 @@ Error init_game(int argc, char** argv, Game* game) {
     long int numTokens = strtol(argv[1], &temp, 10);
     long int numPoints = strtol(argv[2], &temp, 10);
 
-    if(!numTokens || numTokens < 0 || numTokens > INT_MAX || 
-            !numPoints || numPoints < 0 || numPoints > INT_MAX) {
+    if(numTokens < 0 || numTokens > INT_MAX ||
+            numPoints < 0 || numPoints > INT_MAX) {
         return E_ARGV;
     }
-    game->numTokens = numTokens;
-    game->numPoints = numPoints;
+    for(int i = 0; i < TOKEN_SIZE; i++) {
+        game->tokens[i] = (int)numTokens;
+    }
+    game->numPoints = (int)numPoints;
 
     FILE* deckFile = fopen(argv[3], "r");
     if(!deckFile) {
