@@ -172,3 +172,4 @@ char* card_to_string(Card card) {
 
     return output;
 }
+

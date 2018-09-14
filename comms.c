@@ -32,32 +32,27 @@ char* encode_hub(Msg* msg) {
             break;
         case TOKENS:
             strcpy(output, "tokens");
-            char* tokens = to_string(msg->tokens);
-            strcat(output, tokens);
-            free(tokens);
+            concat(output, to_string(msg->tokens));
             break;
         case NEWCARD:
             strcpy(output, "newcard");
-            char* card = card_to_string(msg->info);
-            strcat(output, card);
-            free(card);
+            concat(output, card_to_string(msg->info));
             break;
         case PURCHASED:
-            output[0] = msg->player;
-            output[1] = '\0';
-            char* temp = to_string(msg->card);
-            strcat(output, temp);
-            free(temp);
+            strcpy(output, "purchased"); 
+            concat(output, to_string(msg->player));
+            strcat(output, ":");
+            concat(output, to_string(msg->card));
+            strcat(output, ":");
             for(int i = PURPLE; i < CARD_SIZE; i++) {
-                char* temp = to_string(msg->info[i]);
-                strcat(output, temp);
-                free(temp);
+                concat(output, to_string(msg->info[i]));
+                strcat(output, ",");   
             }
+            concat(output, to_string(msg->wild));
             break;
         case WILD:
             strcpy(output, "wild");
-            char player[2] = {msg->player, '\0'};
-            strcat(output, player);
+            concat(output, to_string(msg->player));
             break;
         default:
             free(output);
@@ -74,8 +69,35 @@ char* encode_hub(Msg* msg) {
  * returns: NULL if invalid contents,
  *          string containing encoded message otherwise
  */
-char* encode_player() { //Msg* msg) {
-    return "test";
+char* encode_player(Msg* msg) {
+    char* output = (char*)malloc(sizeof(char) * LINE_BUFF);
+    switch(msg->type) {
+        case PURCHASE:
+            strcpy(output, "purchase");
+            concat(output, to_string(msg->card));
+            strcat(output, ":");
+            for(int i = PURPLE; i < CARD_SIZE; i++) {
+                concat(output, to_string(msg->info[i]));
+                strcat(output, ",");   
+            }
+            concat(output, to_string(msg->wild));
+            break;
+        case TAKE:
+            strcpy(output, "take");
+            for(int i = PURPLE; i < CARD_SIZE; i++) {
+                concat(output, to_string(msg->info[i]));
+                if(i < CARD_SIZE - 1) {
+                    strcat(output, ",");
+                }
+            }
+            break;
+        case WILD:
+            strcpy(output, "wild");
+            break;
+        default:
+            break;
+    }
+    return output;
 }
 
 /*

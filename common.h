@@ -28,5 +28,7 @@ char* to_string(int input);
 
 char* read_line(FILE* input);
 
+void concat(char* input1, char* input2);
+
 #endif
 

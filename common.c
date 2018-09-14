@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "common.h"
 #include "err.h"
 
@@ -45,4 +46,15 @@ char* read_line(FILE* input) {
             result = (char*)realloc(result, sizeof(char) * size);
         }
     }
+}
+
+/*
+ * concatenates the given string to the output string 
+ * and frees the added string
+ * params:  input1 - string to concatenate to
+ *          input2 - string to concatenate with
+ */
+void concat(char* input1, char* input2) {
+    strcat(input1, input2);
+    free(input2);
 }
