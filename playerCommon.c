@@ -83,7 +83,7 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
         if((int)decode_hub_msg(&msg, line) == ERR) {
             break;
         }
-        
+
         switch(msg.type) {
             case EOG:
                 return OK;
