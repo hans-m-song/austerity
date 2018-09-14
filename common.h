@@ -8,6 +8,7 @@
 #define OUT 1
 #define LINE_BUFF 50
 #define TOKEN_SIZE 4
+#define MAX_PLAYERS 26
 
 // struct containing information relevant to the game
 // for the hub, pID is unused, numPoints contains the winning number of points

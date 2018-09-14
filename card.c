@@ -88,31 +88,25 @@ Error add_card(Stack* stack, char color, int points,
  * returns: ERR if card not found,
  *          OK otherwise
  */
-Error remove_card(Stack* stack, Card card) {
-    int matches = 0;
-    for(int i = 0; i < stack->numCards; i++) {
-        for(int j = 0; j < CARD_SIZE; j++) {
-            if(stack->deck[i][j] == card[j]) {
-                matches++;
-            }
+Error remove_card(Stack* stack, int card) {
+    if (card > stack->numCards - 1) {
+        return ERR;
+    }
 
-            if(matches == CARD_SIZE) {
-                // remove the card
-                if(i != stack->numCards - 1) {
-                    for(int k = i; k < stack->numCards - 1; k++) {
-                        for(int l = 0; l < CARD_SIZE; l++) {
-                            stack->deck[k][l] = stack->deck[k + 1][l];
-                        }
-                    }
-                }
-                stack->numCards--;
-                free(stack->deck[stack->numCards]);
-                return OK;
+    if(card != stack->numCards - 1) {
+        for(int i = card; i < stack->numCards - 1; i++) {
+            for(int j = 0; j < CARD_SIZE; j++) {
+#ifdef TEST
+                printf("%d:%d, %d <- %d\n", i, j, 
+                        stack->deck[i][j], stack->deck[i + 1][j]);
+#endif
+                stack->deck[i][j] = stack->deck[i + 1][j];
             }
-            matches = 0;
         }
     }
-    return ERR;
+    stack->numCards--;
+    free(stack->deck[stack->numCards]);
+    return OK;
 }
 
 /*

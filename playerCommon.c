@@ -64,26 +64,20 @@ void send_move(Msg* msg) {
 #endif
 }
 
-void newcard(Game* game, Msg* msg) {
-    add_card(&game->stack, msg->info[COLOR], msg->info[POINTS], 
-            msg->info[PURPLE], msg->info[BROWN], 
-            msg->info[YELLOW], msg->info[RED]);
-    free(msg->info);
-}
-
 /*
  * main driver for logic of players
  * params:  game - struct containing game relevant information
  *          move - function pointer to the player-specific move logic
  * returns: E_COMMERR if bad message received,
- *          OK otherwise for end of game
+ *          UTIL otherwise for end of game
  */
 Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
-    Error err = E_COMMERR;
+    Error err = OK;
     //int resetDeckFlag = 0;
     char* line;
     Msg msg; 
-    while(1) {
+    msg.info = (Card)malloc(sizeof(int) * CARD_SIZE);
+    while(err == OK) {
         line = read_line(stdin);
         if(!line) {
             break;
@@ -95,30 +89,32 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
 
         switch(msg.type) {
             case EOG:
-                return OK;
+                err = UTIL;
+                break;
             case DOWHAT:
                 send_move(playerMove(game));
                 break;
             case TOKENS:
                 break;
             case NEWCARD:
-                // while msg.type == newcard, addcard, resetdeckflag
-                newcard(game, &msg);
+                err = add_card(&game->stack, 
+                        msg.info[COLOR], msg.info[POINTS], 
+                        msg.info[PURPLE], msg.info[BROWN], 
+                        msg.info[YELLOW], msg.info[RED]);
                 break;
             case PURCHASED:
-                // TODO remove_card();
-                free(msg.info);
+                err = remove_card(&game->stack, msg.card);
                 break;
             case TOOK:
                 // TODO update_tokens();
-                free(msg.info);
                 break;
             case WILD:
                 // TODO update_tokens();
                 break;
             default:
-                return E_COMMERR;
+                err = E_COMMERR;
         }
     }
+    free(msg.info);
     return err;
 }

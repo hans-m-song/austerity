@@ -89,11 +89,6 @@ Comm decode_hub_msg(Msg* msg, char* input) {
     char player, color;
     char end = '\0';
     int tokens, points, purple, brown, yellow, red, wild, card;
-    
-#ifdef TEST
-    printf("decode:\thub=%s\n", input);
-#endif
-
     if(strcmp(input, "eog") == 0) {
         msg->type = EOG;
     } else if(strcmp(input, "dowhat") == OK) {
@@ -106,7 +101,6 @@ Comm decode_hub_msg(Msg* msg, char* input) {
         msg->type = TOKENS;
         msg->tokens = tokens;
     } else {
-        msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
         if(sscanf(input, "newcard%c:%d:%d,%d,%d,%d,%c", &color, &points, 
                 &purple, &brown, &yellow, &red, &end) == 6 && !end) {
             msg->type = NEWCARD;
@@ -125,10 +119,17 @@ Comm decode_hub_msg(Msg* msg, char* input) {
             msg->player = player;
             save_info(msg->info, (char)0, 0, purple, brown, yellow, red);
         } else {
+#ifdef TEST
+            printf("invalid:\thub=%s\n", input);
+#endif
             free(input);
             return ERR;
         }
     }
+    
+#ifdef TEST
+    printf("decode:[%d] hub=%s\n", msg->type, input);
+#endif
 
     free(input);
     return msg->type;

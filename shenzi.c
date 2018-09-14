@@ -59,6 +59,9 @@ int main(int argc, char** argv) {
     init_player_game(pID, pCount, &game);
 
     Error err = play_game(&game, &shenzi_move);
+    if(err == UTIL) {
+        err = OK;
+    }
     
     if(game.stack.numCards) {
         shred_deck(game.stack.deck, game.stack.numCards);

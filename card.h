@@ -29,7 +29,7 @@ void print_deck(Deck deck, int numCards);
 Error add_card(Stack* stack, char color, int points,
         int purple, int brown, int yellow, int red);
 
-Error remove_card(Stack* stack, Card card);
+Error remove_card(Stack* stack, int card);
 
 void shred_deck(Deck deck, int numCards);
 

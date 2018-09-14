@@ -184,7 +184,7 @@ Error init_game(int argc, char** argv, Game* game) {
 
 int main(int argc, char** argv) {
     Game game;
-    if(argc < 6) {
+    if(argc < 6 || argc - 4 > MAX_PLAYERS) {
         herr_msg(E_ARGC);
         return E_ARGC;
     }
