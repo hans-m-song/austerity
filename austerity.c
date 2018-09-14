@@ -177,6 +177,8 @@ Error init_game(int argc, char** argv, Game* game) {
     print_deck(game->stack.deck, game->stack.numCards);
 #endif
 
+    memset(game->tokens, 0, sizeof(int) * TOKEN_SIZE);
+        
     return OK;
 }
 

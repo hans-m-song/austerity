@@ -7,6 +7,7 @@
 #define IN 0
 #define OUT 1
 #define LINE_BUFF 50
+#define TOKEN_SIZE 4
 
 // struct containing information relevant to the game
 // for the hub, pID is unused, numPoints contains the winning number of points
@@ -20,6 +21,7 @@ typedef struct {
     int numTokens;
     int numPoints;
     Stack stack;
+    int tokens[4];
 } Game;
 
 char* to_string(int input);

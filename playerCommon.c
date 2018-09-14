@@ -48,6 +48,7 @@ void init_player_game(int pID, int pCount, Game* game) {
     game->pCount = pCount;
     game->numPoints = 0;
     game->stack.numCards = 0;
+    memset(game->tokens, 0, sizeof(int) * TOKEN_SIZE);
 }
 
 /*
@@ -63,6 +64,13 @@ void send_move(Msg* msg) {
 #endif
 }
 
+void newcard(Game* game, Msg* msg) {
+    add_card(&game->stack, msg->info[COLOR], msg->info[POINTS], 
+            msg->info[PURPLE], msg->info[BROWN], 
+            msg->info[YELLOW], msg->info[RED]);
+    free(msg->info);
+}
+
 /*
  * main driver for logic of players
  * params:  game - struct containing game relevant information
@@ -72,6 +80,7 @@ void send_move(Msg* msg) {
  */
 Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
     Error err = E_COMMERR;
+    //int resetDeckFlag = 0;
     char* line;
     Msg msg; 
     while(1) {
@@ -93,10 +102,8 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
             case TOKENS:
                 break;
             case NEWCARD:
-                add_card(&game->stack, msg.info[COLOR], msg.info[POINTS], 
-                        msg.info[PURPLE], msg.info[BROWN], 
-                        msg.info[YELLOW], msg.info[RED]);
-                free(msg.info);
+                // while msg.type == newcard, addcard, resetdeckflag
+                newcard(game, &msg);
                 break;
             case PURCHASED:
                 // TODO remove_card();
