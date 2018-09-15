@@ -7,14 +7,58 @@
 #include "comms.h"
 #include "card.h"
 
-// gameplay:
-// start loop
-//      1. newcard (show all faceup cards)
-//      start loop
-//          2. ask player for action
-//          3. inform all OTHER players of action
-//      end loop
-// end loop
+/*
+ * checks if cards can be purchased and chooses one if so
+ * params:  game - struct containing game relevant information
+ * returns: -1 if no cards are valid,
+ *          otherwise, returns a number from 0-7 (unless hub is naughty?)
+ */
+int choose_card(Game* game) {
+    int chosenCard = -1;
+    int* sortedCards = (int*)malloc(game->stack.numCards * sizeof(int));
+    memset(sortedCards, -1, sizeof(int) * game->stack.numCards);
+    for(int i = 0; i < game->stack.numCards; i++) {
+        int max = 0;
+        for(int j = 0; j < game->stack.numCards; j++) { // descending cost
+            if(has_element(sortedCards, game->stack.numCards, j)) {
+                continue;
+            }
+            int sum = sum_tokens(game->stack.deck[j]); 
+            if(max < sum) {
+                max = sum;
+                sortedCards[i] = j;
+            }
+        }
+    }
+
+#ifdef VERBOSE
+    printf("sorted deck:\n");
+    for(int i = 0; i < game->stack.numCards; i++) {
+        print_card(game->stack.deck[sortedCards[i]]);
+    }
+    printf("\n");
+#endif
+    
+    int validCardNum = game->stack.numCards; // prune unaffordable cards
+    for(int i = 0; i < game->stack.numCards; i++) {
+        if(!can_afford(game->stack.deck[sortedCards[i]], 
+                    game->tokens, game->wild)) {
+            sortedCards[i] = -1;
+            validCardNum--;
+        }
+    }
+
+    int max = 0;
+    for(int i = game->stack.numCards - 1; i > -1; i--) { // reversed to ascend
+        if(sortedCards[i] > -1 && // choose biggest from remaining
+                game->stack.deck[sortedCards[i]][POINTS] > max) {
+            chosenCard = sortedCards[i];
+        }
+    }
+    
+    free(sortedCards);
+    return chosenCard;
+}
 
 /*
  * TODO shenzi_move determines the next move to take for shenzi
@@ -27,34 +71,27 @@ Msg* shenzi_move(Game* game) {
 #endif
 
     Msg* msg = (Msg*)malloc(sizeof(Msg));
-    Deck sortedDeck = sort_cards(&game->stack, 'p');
-    // TODO look for valid cards
-    // if valid
-    // msg->type = PURCHASE;
-    // msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
-    // add_card(&game->ownedCards, cardstuff);
-    // remove_card(&game->stack, msg->card);
-    // return msg
-    int* validCards = (int*)malloc(sizeof(int) * game->stack.numCards);
-    memset(validCards, 0, sizeof(int) * game->stack.numCards);
-    for(int i = 0; i < game->stack.numCards; i++) {
-        if(can_afford(game->stack.deck[i], game->tokens, game->wild)) {
-            validCards[i] = i;
-        }
-    }
-    free(validCards);
-    shred_deck(sortedDeck, game->stack.numCards);
-    int tokenOrder[] = {PURPLE - 2, BROWN - 2, YELLOW - 2, RED - 2};
-    int* tokens = get_tokens(game->tokens, tokenOrder);
-    if(tokens) {
-        msg->type = TAKE;
+    int chosenCard = choose_card(game);
+    if(chosenCard > -1) { // if valid card found
+        msg->type = PURCHASE;
+        msg->card = chosenCard;
         msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
-        for(int i = PURPLE; i < CARD_SIZE; i++) {
-            msg->info[i] = tokens[i - 2];
+        memcpy(msg->info, game->stack.deck[chosenCard], 
+                sizeof(int) * CARD_SIZE);
+        remove_card(&game->stack, chosenCard);
+    } else { // take tokens
+        int tokenOrder[] = {PURPLE - 2, BROWN - 2, YELLOW - 2, RED - 2};
+        int* tokens = get_tokens(game->tokens, tokenOrder);
+        if(tokens) {
+            msg->type = TAKE;
+            msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
+            for(int i = PURPLE; i < CARD_SIZE; i++) {
+                msg->info[i] = tokens[i - 2];
+            }
+            free(tokens);
+        } else { // take wild token
+            msg->type = WILD;
         }
-        free(tokens);
-    } else {
-        msg->type = WILD;
     }
     return msg;
 }

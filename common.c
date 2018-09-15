@@ -58,3 +58,20 @@ void concat(char* input1, char* input2) {
     strcat(input1, input2);
     free(input2);
 }
+
+/*
+ * checks if an element is in an array
+ * params:  array - array to search
+ *          len - length of array
+ *          element - element to search for
+ * returns: 1 if element found,
+ *          0 otherwise
+ */
+int has_element(int* array, int len, int element) {
+    for(int i = 0; i < len; i++) {
+        if(array[i] == element) {
+            return 1;
+        }
+    }
+    return 0;
+}

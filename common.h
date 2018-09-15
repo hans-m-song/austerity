@@ -32,5 +32,7 @@ char* read_line(FILE* input);
 
 void concat(char* input1, char* input2);
 
+int has_element(int* array, int len, int element);
+
 #endif
 

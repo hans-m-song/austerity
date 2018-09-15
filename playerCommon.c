@@ -223,27 +223,27 @@ int sum_tokens(Card card) {
 /*
  * checks if player can afford the card with their owned tokens
  * params:  card - card to purchase
- *          ownedTokens - players owned tokens
+ *          tokens - players owned tokens
  *          wild - number of owned wild tokens
- * returns: ERR if cannot afford,
- *          otherwise returns number of wild tokens used
+ * returns: 0 if cannot afford,
+ *          1 otherwise
  */
-int can_afford(Card card, int ownedTokens[TOKEN_SIZE], int wild) {
+int can_afford(Card card, int tokens[TOKEN_SIZE], int wild) {
     int usedWild = 0;
     for(int i = 0; i < TOKEN_SIZE; i++) {
-        if(card[i + 2] > ownedTokens[i] + wild - usedWild) {
-            return ERR;
+        if(card[i + 2] > tokens[i] + wild - usedWild) {
+            return 0;
         }
 
-        if(card[i + 2] > ownedTokens[i]) {
-            usedWild += card[i + 2] - ownedTokens[i];
-            ownedTokens[i] = 0;
+        if(card[i + 2] > tokens[i]) {
+            usedWild += card[i + 2] - tokens[i];
+            tokens[i] = 0;
         } else {
-            ownedTokens[i] -= card[i + 2];
+            tokens[i] -= card[i + 2];
         }
     }
     
-    return usedWild;
+    return 1;
 }
 
 /*

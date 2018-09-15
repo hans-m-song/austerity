@@ -18,6 +18,8 @@ void player_status(Comm type, char* winners);
 
 Error play_game(Game* game, Msg* (*playerMove)(Game*));
 
+int sum_tokens(Card card);
+
 int* get_tokens(int tokens[TOKEN_SIZE], int tokenOrder[TOKEN_SIZE]);
 
 int can_afford(Card card, int ownedTokens[TOKEN_SIZE], int wild);
