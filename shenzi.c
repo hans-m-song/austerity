@@ -93,6 +93,11 @@ Msg* shenzi_move(Game* game) {
             msg->type = WILD;
         }
     }
+
+#ifdef TEST 
+    printf("doing move %d\n", msg->type);
+#endif
+
     return msg;
 }
 
