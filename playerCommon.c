@@ -48,7 +48,9 @@ void init_player_game(int pID, int pCount, Game* game) {
     game->pCount = pCount;
     game->numPoints = 0;
     game->stack.numCards = 0;
+    game->ownedCards.numCards = 0;
     memset(game->tokens, 0, sizeof(int) * TOKEN_SIZE);
+    game->wild = 0;
 }
 
 /*
@@ -59,6 +61,7 @@ void init_player_game(int pID, int pCount, Game* game) {
 void send_move(Msg* msg) {
     char* encodedMsg = encode_player(msg);
     printf("%s\n", encodedMsg);
+    free(msg);
     free(encodedMsg);
 }
 
@@ -202,4 +205,105 @@ int* get_tokens(int tokens[TOKEN_SIZE], int tokenOrder[TOKEN_SIZE]) {
 
     return takenTokens;
     
+}
+
+/*
+ * adds up the token cost of a card
+ * params:  card - struct containing card details
+ * returns: sum of token costs of a card
+ */
+int sum_tokens(Card card) {
+    int total = 0;
+    for(int i = PURPLE; i < CARD_SIZE; i++) {
+        total += card[i];
+    }
+    return total;
+}
+
+/*
+ * checks if player can afford the card with their owned tokens
+ * params:  card - card to purchase
+ *          ownedTokens - players owned tokens
+ *          wild - number of owned wild tokens
+ * returns: ERR if cannot afford,
+ *          otherwise returns number of wild tokens used
+ */
+int can_afford(Card card, int ownedTokens[TOKEN_SIZE], int wild) {
+    int usedWild = 0;
+    for(int i = 0; i < TOKEN_SIZE; i++) {
+        if(card[i + 2] > ownedTokens[i] + wild - usedWild) {
+            return ERR;
+        }
+
+        if(card[i + 2] > ownedTokens[i]) {
+            usedWild += card[i + 2] - ownedTokens[i];
+            ownedTokens[i] = 0;
+        } else {
+            ownedTokens[i] -= card[i + 2];
+        }
+    }
+    
+    return usedWild;
+}
+
+/*
+ * sort function for qsort, sorts by points in descending order
+ * params:  a, b - cards to compare
+ * returns: 0 if equal, 
+ *          negative if b is smaller, 
+ *          positive if a is smaller
+ */
+int compare_points(const void* a, const void* b) {
+    Card cardA = *(Card*)a;
+    Card cardB = *(Card*)b;
+    
+    return (cardB[POINTS] - cardA[POINTS]);
+}
+
+/*
+ * sort function for qsort, sorts by token cost in descending order
+ * params:  a, b - cards to compare
+ * returns: 0 if equal, 
+ *          negative if b is smaller, 
+ *          positive if a is smaller
+ */
+int compare_tokens(const void* a, const void* b) {
+    Card cardA = *(Card*)a;
+    Card cardB = *(Card*)b;
+
+    return (sum_tokens(cardB) - sum_tokens(cardA));
+}
+
+/*
+ * sorts cards based on given mode in descending order
+ * params:  stack - struct containing deck and number of cards
+ *          field - either 'p' to sort by points or 't' to sort by token cost
+ * returns: ERR if for some unknown reason it fails
+ *          otherwise an int array of the index of each card sorted
+ */
+Deck sort_cards(Stack* stack, char field) {
+#ifdef VERBOSE 
+    printf("sorting %d cards:\n", stack->numCards);
+    print_deck(stack->deck, stack->numCards);
+    printf("\n");
+#endif
+
+    Deck sortedCards = (Deck)malloc(sizeof(int*) * stack->numCards);
+    for(int i = 0; i < stack->numCards; i++) {
+        sortedCards[i] = (Card)malloc(sizeof(int) * CARD_SIZE);
+        memcpy(sortedCards[i], stack->deck[i], sizeof(int) * CARD_SIZE);
+    }
+
+    if(field == 'p') { // check by points
+        qsort(sortedCards, stack->numCards, sizeof(int*), compare_points);
+    } else { // check by token cost
+        qsort(sortedCards, stack->numCards, sizeof(int*), compare_tokens);
+    }
+
+#ifdef VERBOSE
+    printf("sorted %d cards:\n", stack->numCards);
+    print_deck(sortedCards, stack->numCards);
+#endif
+
+    return sortedCards;
 }

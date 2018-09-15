@@ -21,7 +21,9 @@ typedef struct {
     int pCount;
     int numPoints;
     Stack stack;
+    Stack ownedCards;
     int tokens[4];
+    int wild;
 } Game;
 
 char* to_string(int input);

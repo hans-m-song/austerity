@@ -148,7 +148,7 @@ Comm decode_hub_msg(Msg* msg, char* input) {
         }
     }
     
-#ifdef TEST
+#ifdef VERBOSE 
     printf("decode:[%d] hub=%s\n", msg->type, input);
 #endif
 

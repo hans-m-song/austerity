@@ -22,24 +22,28 @@
  * returns: msg containing move for this player
  */
 Msg* shenzi_move(Game* game) {
-    //1. buy card with most points (if enough tokens)
-    //  a. smallest cost
-    //  b. most recent
-    //2. if 3 tokens can be taken
-    //  a. purple
-    //  b. brown
-    //  c. yellow
-    //  d. red
-    //3. take wild
+#ifdef TEST
     printf("shenzi[%d] move\n", game->pID);
-    Msg* msg = (Msg*)malloc(sizeof(Msg));
-    int biggestCard = -1;
-    int lowestCost = -1;
-    for(int i = 0; i < game->stack.numCards; i++) {
-        // TODO look for valid cards
-        // msg->type = PURCHASE;
-    }
+#endif
 
+    Msg* msg = (Msg*)malloc(sizeof(Msg));
+    Deck sortedDeck = sort_cards(&game->stack, 'p');
+    // TODO look for valid cards
+    // if valid
+    // msg->type = PURCHASE;
+    // msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
+    // add_card(&game->ownedCards, cardstuff);
+    // remove_card(&game->stack, msg->card);
+    // return msg
+    int* validCards = (int*)malloc(sizeof(int) * game->stack.numCards);
+    memset(validCards, 0, sizeof(int) * game->stack.numCards);
+    for(int i = 0; i < game->stack.numCards; i++) {
+        if(can_afford(game->stack.deck[i], game->tokens, game->wild)) {
+            validCards[i] = i;
+        }
+    }
+    free(validCards);
+    shred_deck(sortedDeck, game->stack.numCards);
     int tokenOrder[] = {PURPLE - 2, BROWN - 2, YELLOW - 2, RED - 2};
     int* tokens = get_tokens(game->tokens, tokenOrder);
     if(tokens) {

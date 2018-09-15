@@ -20,4 +20,8 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*));
 
 int* get_tokens(int tokens[TOKEN_SIZE], int tokenOrder[TOKEN_SIZE]);
 
+int can_afford(Card card, int ownedTokens[TOKEN_SIZE], int wild);
+
+Deck sort_cards(Stack* stack, char field);
+
 #endif

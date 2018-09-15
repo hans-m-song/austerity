@@ -21,7 +21,6 @@ void print_card(Card card) {
  *          numCards - number of cards in deck
  */
 void print_deck(Deck deck, int numCards) {
-    printf("print:\tdeck of %d cards\n", numCards);
     for(int i = 0; i < numCards; i++) {
         print_card(deck[i]);
     }
@@ -115,23 +114,14 @@ Error remove_card(Stack* stack, int card) {
  *          numCards - number of cards in deck
  */
 void shred_deck(Deck deck, int numCards) {
-#ifdef TEST
+#ifdef VERBOSE
     printf("shredding deck of %d cards\n", numCards);
 #endif
-
+    
     for(int i = 0; i < numCards; i++) {
         free(deck[i]);
-
-#ifdef VERBOSE
-        printf("free:\tcard %d\n", i);
-#endif
-
     }
     free(deck);
-
-#ifdef VERBOSE
-    printf("free:\tdeck\n");
-#endif
 }
 
 /*
