@@ -83,10 +83,16 @@ Opponent* init_opponents(int pCount) {
 Error print_winners(int pCount, Opponent* opponents) {
     fprintf(stderr, "Game over. Winners are ");
     int max = 0;
-    int count = 0;
     for(int i = 0; i < pCount; i++) {
         if(max < opponents[i].points) {
             max = opponents[i].points;
+        }
+    }
+
+    // TODO test winning players
+    int count = 0;
+    for(int i = 0; i < pCount; i++) {
+        if(opponents[i].points == max) {
             count++;
         }
     }
@@ -94,12 +100,12 @@ Error print_winners(int pCount, Opponent* opponents) {
     for(int i = 0; i < pCount; i++) {
         if(opponents[i].points == max) {
             fprintf(stderr, "%c", (char)(i + 65));
-            count--;
-            if(count - 1) {
+            if(--count) {
                 fprintf(stderr, ",");
             }
         }
     }
+
     fprintf(stderr, "\n");
 
     return UTIL;

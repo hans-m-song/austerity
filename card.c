@@ -12,7 +12,7 @@
  *          position - place in stack
  */
 void print_card(Card card, int position) {
-#ifdef TEST
+#ifdef VERBOSE 
     printf("print:\tcard %c:%d:%d,%d,%d,%d\n", 
             (char)card[COLOR], card[POINTS], 
             card[PURPLE], card[BROWN], card[YELLOW], card[RED]);

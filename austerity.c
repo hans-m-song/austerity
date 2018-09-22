@@ -73,7 +73,9 @@ void end_game(Game* game, Session* session, Error err) {
 #endif
 
     shred_deck(game->stack.deck, game->stack.numCards);
-    kill_players(game->pCount, session->players);
+    if(session->parentPID == getpid()) {
+        kill_players(game->pCount, session->players);
+    }
     for(int i = 0; i < game->pCount; i++) {
         close(session->players[i].pipeIn[READ]);
         close(session->players[i].pipeOut[WRITE]);
@@ -138,9 +140,9 @@ Error start_players(int pCount, char** players,
 #ifdef TEST
                 printf("failed to exec:\t%s\n", args[0]);
 #endif
-                
                 free(totalPlayers);
                 free(pID);
+
                 return E_EXEC;
             }
         } else { // parent
