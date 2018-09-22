@@ -1,12 +1,10 @@
 CC = gcc
-DEFAULT := -Wall -Wextra -pedantic -std=gnu99
-BUILD := test
-flags.test := -DTEST -g $(DEFAULT)
-flags.verbose := -DTEST -DVERBOSE -g $(DEFAULT)
-flags.release := $(DEFAULT) -Werror
+BUILD := release
+flags.test 	:= -Wall -Wextra -pedantic -std=gnu99 -g -DTEST
+flags.verbose 	:= -Wall -Wextra -pedantic -std=gnu99 -g -DTEST -DVERBOSE
+flags.release 	:= -Wall -Wextra -pedantic -std=gnu99 -Werror
 FLAGS := $(flags.$(BUILD))
-OBJ = err.o card.o common.o comms.o playerCommon.o
-#token.o 
+OBJ = err.o card.o common.o comms.o playerCommon.o signalHandler.o hub.o
 
 all: aus shen ban ed 
 	@echo BUILD=$(BUILD)

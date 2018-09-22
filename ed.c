@@ -48,6 +48,11 @@ int main(int argc, char** argv) {
     if(game.stack.numCards) {
         shred_deck(game.stack.deck, game.stack.numCards);
     }
+
+#ifdef TEST
+    printf("ed exiting\n");
+#endif
+
     perr_msg(err, ED); 
     return err;
 }

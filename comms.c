@@ -5,14 +5,33 @@
 #include "card.h"
 #include "comms.h"
 #include "common.h"
+#include "signalHandler.h"
 
 /*
  * TODO send_msg takes the message and pipes it through the given fd
- * params:  pipe - fd to send message to
+ * params:  destination - fd to send message to
  *          msg - message to send
- * returns: E_PIPECLOSE, E_PROTOCOL, ERR, OK
+ * returns: E_DEADPLAYER if pipe closed unexpectedly
+ *          OK otherwise
  */
-int send_msg(Msg* msg, int destination);
+Error send_msg(Msg* msg, int destination) {
+    char* encodedMsg = encode_hub(msg);
+    if(!encodedMsg) {
+        encodedMsg = encode_player(msg);
+    }
+    if(!encodedMsg) {
+        return E_PROTOCOL;
+    }
+
+    dprintf(destination, encodedMsg);
+    free(encodedMsg);
+
+    if(check_signal()) {
+        return E_DEADPLAYER;
+    }
+
+    return OK;
+}
 
 /*
  * encodes a message and saves it into the given output
@@ -115,6 +134,7 @@ Comm decode_hub_msg(Msg* msg, char* input) {
         msg->type = EOG;
     } else if(strcmp(input, "dowhat") == OK) {
         msg->type = DOWHAT;
+        fprintf(stdout, "Received dowhat");
     } else if(sscanf(input, "wild%c%c", &player, &end) == 1 && !end) {
         msg->type = WILD;
         msg->player = player;

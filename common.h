@@ -4,8 +4,9 @@
 #include <stdio.h>
 #include "card.h"
 
-#define IN 0
-#define OUT 1
+#define FD_SIZE 2
+#define READ 0
+#define WRITE 1
 #define LINE_BUFF 50
 #define TOKEN_SIZE 4
 #define MAX_PLAYERS 26

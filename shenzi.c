@@ -80,6 +80,7 @@ Msg* shenzi_move(Game* game) {
                 sizeof(int) * CARD_SIZE);
         remove_card(&game->stack, chosenCard);
     } else { // take tokens
+        // TODO figure out why shenzi doesnt take tokens
         int tokenOrder[] = {PURPLE - 2, BROWN - 2, YELLOW - 2, RED - 2};
         int* tokens = get_tokens(game->tokens, tokenOrder);
         if(tokens) {
@@ -130,6 +131,11 @@ int main(int argc, char** argv) {
     if(game.stack.numCards) {
         shred_deck(game.stack.deck, game.stack.numCards);
     }
+
+#ifdef TEST
+    printf("shenzi exiting\n");
+#endif
+
     perr_msg(err, SHENZI); 
     return err;
 }

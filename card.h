@@ -22,7 +22,7 @@ typedef struct {
     Deck deck;
 } Stack;
 
-void print_card(Card card);
+void print_card(Card card, int position);
 
 void print_deck(Deck deck, int numCards);
 

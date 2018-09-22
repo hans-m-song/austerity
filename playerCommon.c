@@ -2,10 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <signal.h>
 #include "err.h"
 #include "common.h"
 #include "playerCommon.h"
 #include "comms.h"
+#include "signalHandler.h"
 
 /*
  * checks if the given string is valid
@@ -54,15 +56,70 @@ void init_player_game(int pID, int pCount, Game* game) {
 }
 
 /*
+ * initalizes local record of opponents stats
+ * params:  pCount - number of players
+ * returns: array of structs containing player stats
+ */
+Opponent* init_opponents(int pCount) {
+    Opponent* opponents = (Opponent*)malloc(sizeof(Opponent) * pCount);
+    
+    for(int i = 0; i < pCount; i++) {
+        opponents[i].id = i;
+        opponents[i].points = 0;
+        opponents[i].wild = 0;
+        memset(opponents[i].tokens, 0, sizeof(int) * TOKEN_SIZE);
+        memset(opponents[i].discount, 0, sizeof(int) * TOKEN_SIZE);
+    }
+
+    return opponents;
+}
+
+/*
+ * prints the winning players
+ * params:  pCount - number of player in the game
+ *          opponents - array of structs containing player information
+ * returns: UTIL to indicate end of game
+ */
+Error print_winners(int pCount, Opponent* opponents) {
+    fprintf(stderr, "Game over. Winners are ");
+    int max = 0;
+    int count = 0;
+    for(int i = 0; i < pCount; i++) {
+        if(max < opponents[i].points) {
+            max = opponents[i].points;
+            count++;
+        }
+    }
+
+    for(int i = 0; i < pCount; i++) {
+        if(opponents[i].points == max) {
+            fprintf(stderr, "%c", (char)(i + 65));
+            count--;
+            if(count - 1) {
+                fprintf(stderr, ",");
+            }
+        }
+    }
+    fprintf(stderr, "\n");
+
+    return UTIL;
+}
+
+/*
  * TODO send_move? encodes a message and sends it to the given destination
  * params:  msg - message to encode
  *          destination - where to send the message to
+ * returns: E_COMMERR if broken pipe or invalid message
  */
-void send_move(Msg* msg) {
+Error send_move(Msg* msg) {
     char* encodedMsg = encode_player(msg);
-    printf("%s\n", encodedMsg);
+    fprintf(stdout, "%s\n", encodedMsg);
     free(msg);
     free(encodedMsg);
+    if(check_signal()) {
+        return E_COMMERR;
+    }
+    return OK;
 }
 
 /*
@@ -76,6 +133,32 @@ Error newcard(Game* game, Msg* msg) {
     return add_card(&game->stack, msg->info[COLOR], msg->info[POINTS], 
             msg->info[PURPLE], msg->info[BROWN], 
             msg->info[YELLOW], msg->info[RED]);
+}
+
+/*
+ * checks if player can afford the card with their owned tokens
+ * params:  card - card to purchase
+ *          tokens - players owned tokens
+ *          wild - number of owned wild tokens
+ * returns: 0 if cannot afford,
+ *          1 otherwise
+ */
+int can_afford(Card card, int tokens[TOKEN_SIZE], int wild) {
+    int usedWild = 0;
+    for(int i = 0; i < TOKEN_SIZE; i++) {
+        if(card[i + 2] > tokens[i] + wild - usedWild) {
+            return 0;
+        }
+
+        if(card[i + 2] > tokens[i]) {
+            usedWild += card[i + 2] - tokens[i];
+            tokens[i] = 0;
+        } else {
+            tokens[i] -= card[i + 2];
+        }
+    }
+    
+    return 1;
 }
 
 /*
@@ -93,6 +176,11 @@ Error set_tokens(Game* game, int numTokens) {
     for(int i = 0; i < TOKEN_SIZE; i++) {
         game->tokens[i] = numTokens;
     }
+
+#ifdef TEST
+    printf("tokens set: %d,%d,%d,%d\n", game->tokens[0], game->tokens[1],
+            game->tokens[2], game->tokens[3]);
+#endif
 
     return OK;
 }
@@ -120,65 +208,13 @@ Error update_tokens(Game* game, Card card) {
     return OK;
 }
 
-/*
- * main driver for logic of players
- * params:  game - struct containing game relevant information
- *          move - function pointer to the player-specific move logic
- * returns: E_COMMERR if bad message received,
- *          UTIL otherwise for end of game
- */
-Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
-    Error err = OK;
-    //int resetDeckFlag = 0;
-    char* line;
-    Msg msg; 
-    msg.info = (Card)malloc(sizeof(int) * CARD_SIZE);
-    while(err == OK) {
-        line = read_line(stdin);
-        if(!line) {
-            break;
-        }
-            
-        if((int)decode_hub_msg(&msg, line) == ERR) {
-            break;
-        }
-
-        switch(msg.type) {
-            case EOG:
-                err = UTIL;
-                break;
-            case DOWHAT:
-                send_move(playerMove(game));
-                break;
-            case TOKENS:
-                err = set_tokens(game, msg.tokens);
-                break;
-            case NEWCARD:
-                err = newcard(game, &msg);
-                break;
-            case PURCHASED:
-                err = remove_card(&game->stack, msg.card);
-                break;
-            case TOOK:
-                err = update_tokens(game, msg.info);
-                break;
-            case WILD:
-                break;
-            default:
-                err = E_COMMERR;
-        }
-    }
-    free(msg.info);
-    return err;
-}
-
-// TODO get_tokens checks if tokens are valid
+// checks if tokens are valid
 // if valid, takes them in the given order
 // params:  tokens - array of available tokens
 //          tokenOrder - order in which to prefer tokens
 // returns: NULL if no tokens taken,
 //          otherwise, an array of which tokens were taken
-int* get_tokens(int tokens[TOKEN_SIZE], int tokenOrder[TOKEN_SIZE]) {
+int* get_tokens(int* tokens, int tokenOrder[TOKEN_SIZE]) {
     int availableTokens = 0;
     for(int i = 0; i < TOKEN_SIZE; i++) {
         if(tokens[i] > 0) {
@@ -220,28 +256,76 @@ int sum_tokens(Card card) {
     return total;
 }
 
+void print_status(Game* game, Opponent* opponents, int msgType) {
+    if(msgType == EOG || msgType == DOWHAT) {
+        return;
+    }
+
+    print_deck(game->stack.deck, game->stack.numCards);
+    for(int i = 0; i < game->pCount; i++) {
+        fprintf(stderr, "Player %c:%dDiscounts=%d,%d,%d,%d"
+                ":Tokens=%d,%d,%d,%d,%d\n", 
+                (char)opponents[i].id + 65, opponents[i].points,
+                opponents[i].discount[0], opponents[i].discount[1], 
+                opponents[i].discount[2], opponents[i].discount[3],
+                opponents[i].tokens[0], opponents[i].tokens[1],
+                opponents[i].tokens[2], opponents[i].tokens[3],
+                opponents[i].wild);
+    }
+}
+
 /*
- * checks if player can afford the card with their owned tokens
- * params:  card - card to purchase
- *          tokens - players owned tokens
- *          wild - number of owned wild tokens
- * returns: 0 if cannot afford,
- *          1 otherwise
+ * main driver for logic of players
+ * params:  game - struct containing game relevant information
+ *          move - function pointer to the player-specific move logic
+ * returns: E_COMMERR if bad message received,
+ *          UTIL otherwise for end of game
  */
-int can_afford(Card card, int tokens[TOKEN_SIZE], int wild) {
-    int usedWild = 0;
-    for(int i = 0; i < TOKEN_SIZE; i++) {
-        if(card[i + 2] > tokens[i] + wild - usedWild) {
-            return 0;
+Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
+    int signalList[] = {SIGPIPE};
+    init_signal_handler(signalList, 1);
+    Error err = OK;
+    char* line;
+    Msg msg; 
+    msg.info = (Card)malloc(sizeof(int) * CARD_SIZE);
+    Opponent* opponents = init_opponents(game->pCount);
+    while(err == OK) {
+        line = read_line(stdin);
+        if(!line) {
+            break;
+        }
+            
+        if((int)decode_hub_msg(&msg, line) == ERR) {
+            break;
         }
 
-        if(card[i + 2] > tokens[i]) {
-            usedWild += card[i + 2] - tokens[i];
-            tokens[i] = 0;
-        } else {
-            tokens[i] -= card[i + 2];
+        switch(msg.type) {
+            case EOG:
+                err = print_winners(game->pCount, opponents);
+                break;
+            case DOWHAT:
+                send_move(playerMove(game));
+                break;
+            case TOKENS:
+                err = set_tokens(game, msg.tokens);
+                break;
+            case NEWCARD:
+                err = newcard(game, &msg);
+                break;
+            case PURCHASED:
+                err = remove_card(&game->stack, msg.card);
+                break;
+            case TOOK:
+                err = update_tokens(game, msg.info);
+                break;
+            case WILD:
+                break;
+            default:
+                err = E_COMMERR;
         }
+        print_status(game, opponents, msg.type);
     }
-    
-    return 1;
+    free(msg.info);
+    free(opponents);
+    return err;
 }

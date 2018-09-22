@@ -9,10 +9,18 @@
 /*
  * prints the given card
  * params:  card - an array of integers representing the card
+ *          position - place in stack
  */
-void print_card(Card card) {
-    printf("print:\tcard %c:%d:%d,%d,%d,%d\n", (char)card[COLOR],
-            card[POINTS], card[PURPLE], card[BROWN], card[YELLOW], card[RED]);
+void print_card(Card card, int position) {
+#ifdef TEST
+    printf("print:\tcard %c:%d:%d,%d,%d,%d\n", 
+            (char)card[COLOR], card[POINTS], 
+            card[PURPLE], card[BROWN], card[YELLOW], card[RED]);
+#endif
+
+    fprintf(stderr, "Card %d:%c/%d/%d,%d,%d,%d\n", 
+            position, (char)card[COLOR], card[POINTS], 
+            card[PURPLE], card[BROWN], card[YELLOW], card[RED]);
 }
 
 /*
@@ -22,7 +30,7 @@ void print_card(Card card) {
  */
 void print_deck(Deck deck, int numCards) {
     for(int i = 0; i < numCards; i++) {
-        print_card(deck[i]);
+        print_card(deck[i], i);
     }
 }
 
@@ -207,6 +215,10 @@ Error read_deck(FILE* deckFile, Stack* stack) {
 #ifdef TEST
     printf("got:\t%d cards\n", stack->numCards);
 #endif
+    
+    if(stack->numCards != 0 && err != OK) {
+        shred_deck(stack->deck, stack->numCards);
+    }
 
     return err;
 }

@@ -1,6 +1,7 @@
 #ifndef COMMS_H
 #define COMMS_H
 
+#include "err.h"
 #include "card.h"
 
 typedef enum {
@@ -26,7 +27,7 @@ typedef struct {
     int card;
 } Msg;
 
-int send_msg(Msg* msg, int destination);
+Error send_msg(Msg* msg, int destination);
 
 char* encode_hub(Msg* msg);
 
