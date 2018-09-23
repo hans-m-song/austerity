@@ -1,12 +1,49 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include "err.h"
 #include "common.h"
 #include "playerCommon.h"
 #include "comms.h"
 #include "card.h"
 #include "token.h"
+#include "signalHandler.h"
+
+/*
+ * sorts deck by lowest cost, newest first
+ * params:  numCards - number of cards in deck
+ *          deck - array of cards to sort
+ * returns: array of indicies of the cards in sorted order
+ */
+int* sort_by_cost(int numCards, Deck deck) {
+    int* sortedCards = (int*)malloc(numCards * sizeof(int));
+    memset(sortedCards, -1, sizeof(int) * numCards);
+    for(int i = numCards - 1; i > -1; i--) {
+        int max = 0; 
+        for(int j = 0; j < numCards; j++) {
+            if(!has_element(sortedCards, numCards, j)) {
+                int sum = sum_tokens(deck[j]); 
+                if(max < sum) {
+                    max = sum;
+                    sortedCards[i] = j;
+                }
+            }
+        }
+    }
+
+#ifdef TEST 
+    printf("sorted deck:\n");
+    for(int i = 0; i < numCards; i++) {
+        fprintf(stderr, "cost:\t%d = ", 
+                sum_tokens(deck[sortedCards[i]]));
+        print_card(deck[sortedCards[i]], sortedCards[i]);
+    }
+    printf("\n");
+#endif
+
+    return sortedCards;
+}
 
 /*
  * checks if cards can be purchased and chooses one if so
@@ -15,44 +52,28 @@
  *          otherwise, returns a number from 0-7 (unless hub is naughty?)
  */
 int choose_card(Game* game) {
-    int* sortedCards = (int*)calloc(game->stack.numCards, sizeof(int));
+    int* sortedCards = sort_by_cost(game->stack.numCards, game->stack.deck);
+
+    int* validCards = (int*)malloc(sizeof(int) * game->stack.numCards);
+    memset(validCards, -1, sizeof(int) * game->stack.numCards);
+    int minCost = -1;
+    int validCardNum = 0; // prune unaffordable cards
     for(int i = 0; i < game->stack.numCards; i++) {
-        int max = 0;
-        for(int j = 0; j < game->stack.numCards; j++) { // descending cost
-            if(has_element(sortedCards, game->stack.numCards, j)) {
-                continue; // skip if already in sortedCards
-            }
-            int sum = sum_tokens(game->stack.deck[j]); 
-            if(max < sum) {
-                max = sum;
-                sortedCards[i] = j;
-            }
+        if(can_afford(game->stack.deck[sortedCards[i]],
+                    game->ownedTokens, game->wild)) {
+            validCards[validCardNum++] = sortedCards[i];
         }
     }
 
-#ifdef VERBOSE
-    printf("sorted deck:\n");
-    for(int i = 0; i < game->stack.numCards; i++) {
-        print_card(game->stack.deck[sortedCards[i]]);
-    }
-    printf("\n");
-#endif
-    
-    int validCardNum = game->stack.numCards; // prune unaffordable cards
-    for(int i = 0; i < game->stack.numCards; i++) {
-        if(!can_afford(game->stack.deck[sortedCards[i]], 
-                game->ownedTokens, game->wild)) {
-            sortedCards[i] = -1;
-            validCardNum--;
-        }
-    }
-
-    int max = 0;
     int chosenCard = -1;
-    for(int i = game->stack.numCards - 1; i > -1; i--) { // reversed to ascend
-        if(sortedCards[i] > 0 && // choose biggest from remaining
-                game->stack.deck[sortedCards[i]][POINTS] > max) {
-            chosenCard = sortedCards[i];
+    if(minCost > 0) {
+        int max = 0;
+        for(int i = 0; i < validCardNum; i++) {
+            print_card(game->stack.deck[validCards[i]], validCards[i]);
+            if(max < game->stack.deck[validCards[i]][POINTS]) {
+                max = game->stack.deck[validCards[i]][POINTS];
+                chosenCard = validCards[i];
+            }
         }
     }
 
@@ -60,6 +81,7 @@ int choose_card(Game* game) {
     printf("can afford %d cards, chose %d\n", validCardNum, chosenCard);
 #endif
     
+    free(validCards);
     free(sortedCards);
     return chosenCard;
 }
@@ -89,14 +111,13 @@ Msg* shenzi_move(Game* game) {
         if(tokens) {
             msg->type = TAKE;
             msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
-            /*for(int i = 0; i < TOKEN_SIZE; i++) {
-                msg->info[i + 2] = tokens[i];
-            }*/
             memcpy(msg->info + 2, tokens, sizeof(int) * TOKEN_SIZE);
+
 #ifdef TEST
             printf("taking:\t%d,%d,%d,%d\n", 
                     tokens[0], tokens[1], tokens[2], tokens[3]);
 #endif
+
             free(tokens);
         } else { // take wild token
             msg->type = WILD;
@@ -131,9 +152,16 @@ int main(int argc, char** argv) {
     Game game;
     init_player_game(pID, pCount, &game);
 
+    int signalList[] = {SIGPIPE};
+    init_signal_handler(signalList, 1);
+    
     Error err = play_game(&game, &shenzi_move);
     if(err == UTIL) {
         err = OK;
+    }
+
+    if(err == ERR) {
+        err = E_COMMERR;
     }
     
     if(game.stack.numCards) {

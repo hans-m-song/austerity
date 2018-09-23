@@ -1,5 +1,6 @@
 CC = gcc
-BUILD := test
+#BUILD := test
+BUILD := release
 flags.test 	:= -Wall -Wextra -pedantic -std=gnu99 -g -DTEST
 flags.verbose 	:= -Wall -Wextra -pedantic -std=gnu99 -g -DTEST -DVERBOSE
 flags.release 	:= -Wall -Wextra -pedantic -std=gnu99 -g -Werror

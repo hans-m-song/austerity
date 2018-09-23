@@ -103,9 +103,9 @@ char* encode_player(Msg* msg) {
             break;
         case TAKE:
             strcpy(output, "take");
-            for(int i = PURPLE; i < CARD_SIZE; i++) {
-                concat(output, to_string(msg->info[i]));
-                if(i < CARD_SIZE - 1) {
+            for(int i = 0; i < TOKEN_SIZE; i++) {
+                concat(output, to_string(msg->info[i + 2]));
+                if(i < TOKEN_SIZE - 1) {
                     strcat(output, ",");
                 }
             }
@@ -149,7 +149,7 @@ Comm decode_hub_msg(Msg* msg, char* input) {
             msg->type = NEWCARD;
             save_info(msg->info, color, points, purple, brown, yellow, red);
         } else if(sscanf(input, "purchased%c:%d:%d,%d,%d,%d,%d%c", &player, 
-                &card, &purple, &brown, &yellow, &red, &wild, &end) == 6 && 
+                &card, &purple, &brown, &yellow, &red, &wild, &end) == 7 && 
                 !end) {
             msg->type = PURCHASED;
             msg->player = player;

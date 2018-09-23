@@ -116,34 +116,20 @@ Error print_winners(int pCount, Opponent* opponents) {
 /*
  * encodes a message and sends it to the given destination
  * params:  game - struct containing relevang game information
- *          opponents - array of structs containing player information
  *          msg - message to encode
  * returns: E_COMMERR if broken pipe or invalid message,
  *          OK otherwise
  */
-Error send_move(Game* game, Opponent* opponents, Msg* msg) {
+Error send_move(Game* game, Msg* msg) {
     fprintf(stderr, "Received dowhat\n");
     msg->player = game->pID + TOCHAR;    
-    if(msg->type == PURCHASE) {
-        game->ownedTokens[0] -= msg->info[PURPLE];
-        game->ownedTokens[1] -= msg->info[BROWN];
-        game->ownedTokens[2] -= msg->info[YELLOW];
-        game->ownedTokens[3] -= msg->info[RED];
-        game->wild -= msg->wild;
-        remove_card(&game->stack, msg->card);
-        free(msg->info);
-    } else if(msg->type == TAKE) {
-        update_tokens(game, msg->info, opponents, msg->player);
-        free(msg->info);
-    } else {
-        game->wild++;
-        opponents[game->pID].wild++;
-    }
-
     char* encodedMsg = encode_player(msg);
     fprintf(stdout, "%s\n", encodedMsg);
-    free(msg);
     free(encodedMsg);
+    if(msg->type == PURCHASE || msg->type == TAKE) {
+        free(msg->info);
+    }
+    free(msg);
     if(check_signal()) {
         return E_COMMERR;
     }
@@ -169,23 +155,32 @@ Error newcard(Game* game, Msg* msg) {
  * params:  game - struct containing relevang game information
  *          opponents - array of structs containing player information
  *          msg - struct containing message contents
- * returns: ERR if removecard fails,
+ * returns: E_COMMERR if removecard fails,
  *          OK otherwise
  */
 Error bought_card(Game* game, Opponent* opponents, Msg* msg) {
     opponents[(int)(msg->player - TOCHAR)].points += msg->info[POINTS];
     // TODO update tokens
+    // TODO update discoun
 
-    Error err = OK;
+    opponents[(int)(msg->player - TOCHAR)].tokens[0] -= msg->info[PURPLE];
+    opponents[(int)(msg->player - TOCHAR)].tokens[1] -= msg->info[BROWN]; 
+    opponents[(int)(msg->player - TOCHAR)].tokens[2] -= msg->info[YELLOW];
+    opponents[(int)(msg->player - TOCHAR)].tokens[3] -= msg->info[RED];
+    opponents[(int)(msg->player - TOCHAR)].wild -= msg->wild;
 
-    err = update_tokens(game, msg->info, opponents, msg->player);
-    if(err == ERR) {
-        return ERR;
+    if(msg->player == game->pID + TOCHAR) {
+        game->ownedTokens[0] -= msg->info[PURPLE];
+        game->ownedTokens[1] -= msg->info[BROWN];
+        game->ownedTokens[2] -= msg->info[YELLOW];
+        game->ownedTokens[3] -= msg->info[RED];
+        game->wild -= msg->wild;
     }
-
+    
+    Error err = OK;
     err = remove_card(&game->stack, msg->card);
-    if(err == ERR) {
-        return ERR;
+    if(err) {
+        return E_COMMERR;
     }
 
     return OK;
@@ -200,11 +195,6 @@ Error bought_card(Game* game, Opponent* opponents, Msg* msg) {
  *          1 otherwise
  */
 int can_afford(Card card, int tokens[TOKEN_SIZE], int wild) {
-#ifdef TEST
-    printf("player has tokens:%d,%d,%d,%d,%d\n",
-            tokens[0], tokens[1], tokens[2], tokens[3], wild);
-#endif
-
     int ownedTokens[TOKEN_SIZE];
     memcpy(ownedTokens, tokens, TOKEN_SIZE * sizeof(int));
     int usedWild = 0;
@@ -229,9 +219,10 @@ int can_afford(Card card, int tokens[TOKEN_SIZE], int wild) {
  * params:  game - struct containing relevang game information
  *          opponents - array of structs containing player information
  *          int msgType - type of message preceeding this function call
+ *          err - error status of game
  */
-void print_status(Game* game, Opponent* opponents, int msgType) {
-    if(msgType == DOWHAT || msgType == EOG) {
+void print_status(Game* game, Opponent* opponents, int msgType, Error err) {
+    if(msgType == EOG || err != OK) {
         return;
     }
 
@@ -256,8 +247,6 @@ void print_status(Game* game, Opponent* opponents, int msgType) {
  *          UTIL otherwise for end of game
  */
 Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
-    int signalList[] = {SIGPIPE};
-    init_signal_handler(signalList, 1);
     Error err = OK;
     char* line;
     Msg msg;
@@ -265,20 +254,17 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
     Opponent* opponents = init_opponents(game->pCount);
     while(err == OK) {
         line = read_line(stdin);
-        if(line == NULL) {
+        if(line == NULL || (int)decode_hub_msg(&msg, line) == ERR) {
             err = E_COMMERR;
             break;
         }
-        if((int)decode_hub_msg(&msg, line) == ERR) {
-            err = E_COMMERR;
-            break;
-        }
+
         switch(msg.type) {
             case EOG:
                 err = print_winners(game->pCount, opponents);
                 break;
             case DOWHAT:
-                err = send_move(game, opponents, playerMove(game));
+                err = send_move(game, playerMove(game));
                 break;
             case TOKENS:
                 err = set_tokens(game, msg.tokens);
@@ -293,12 +279,12 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
                 err = update_tokens(game, msg.info, opponents, msg.player);
                 break;
             case WILD:
-                update_wild(opponents, msg.player);
+                update_wild(game, opponents, msg.player);
                 break;
             default:
                 err = E_COMMERR;
         }
-        print_status(game, opponents, msg.type);
+        print_status(game, opponents, msg.type, err);
     }
     free(msg.info);
     free(opponents);
