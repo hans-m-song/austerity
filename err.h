@@ -1,10 +1,11 @@
 #ifndef ERR_H
 #define ERR_H
 
-#define ERR -1
+//#define ERR -1
 
 // error codes for hub and player
 typedef enum {
+    ERR = -1,
     OK = 0,
     E_ARGC = 1,
     E_PCOUNT = 2,

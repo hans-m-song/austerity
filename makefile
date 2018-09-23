@@ -1,16 +1,16 @@
 CC = gcc
-BUILD := release
+BUILD := test
 flags.test 	:= -Wall -Wextra -pedantic -std=gnu99 -g -DTEST
 flags.verbose 	:= -Wall -Wextra -pedantic -std=gnu99 -g -DTEST -DVERBOSE
-flags.release 	:= -Wall -Wextra -pedantic -std=gnu99 -Werror
+flags.release 	:= -Wall -Wextra -pedantic -std=gnu99 -g -Werror
 FLAGS := $(flags.$(BUILD))
-OBJ = err.o card.o common.o comms.o playerCommon.o signalHandler.o hub.o
+OBJ = err.o card.o common.o comms.o playerCommon.o signalHandler.o token.o
 
 all: aus shen ban ed 
 	@echo BUILD=$(BUILD)
 
-aus: $(OBJ) 
-	$(CC) $(FLAGS) $(OBJ) austerity.c -o austerity
+aus: $(OBJ) hub.o 
+	$(CC) $(FLAGS) $(OBJ) hub.o austerity.c -o austerity
 
 ban: $(OBJ)
 	$(CC) $(FLAGS) $(OBJ) banzai.c -o banzai

@@ -127,6 +127,9 @@ char* encode_player(Msg* msg) {
  *          ERR if invalid contents
  */
 Comm decode_hub_msg(Msg* msg, char* input) {
+    if(!input) {
+        return ERR;
+    }
     char player, color;
     char end = '\0';
     int tokens, points, purple, brown, yellow, red, wild, card;
@@ -134,7 +137,6 @@ Comm decode_hub_msg(Msg* msg, char* input) {
         msg->type = EOG;
     } else if(strcmp(input, "dowhat") == OK) {
         msg->type = DOWHAT;
-        fprintf(stdout, "Received dowhat");
     } else if(sscanf(input, "wild%c%c", &player, &end) == 1 && !end) {
         msg->type = WILD;
         msg->player = player;
@@ -210,25 +212,4 @@ Comm decode_player_msg(Msg* msg, char* input) {
 
     free(input);
     return msg->type;
-}
-
-/*
- * prints relevant information to stderr
- * params:  type - message type
- *          winners - list of winners to print, normally null
- */
-void player_status(Comm type, char* winners) {
-    switch(type) {
-        case EOG:
-            fprintf(stderr, "Game over. Winners are %s\n", winners);
-            break;
-        case DOWHAT:
-            fprintf(stderr, "Received dowhat");
-            break;
-        default:
-#ifdef TEST
-            fprintf(stderr, "got invalid comm type %d\n", type);
-#endif
-            break;
-    }
 }

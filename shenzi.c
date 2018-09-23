@@ -6,6 +6,7 @@
 #include "playerCommon.h"
 #include "comms.h"
 #include "card.h"
+#include "token.h"
 
 /*
  * checks if cards can be purchased and chooses one if so
@@ -14,14 +15,12 @@
  *          otherwise, returns a number from 0-7 (unless hub is naughty?)
  */
 int choose_card(Game* game) {
-    int chosenCard = -1;
-    int* sortedCards = (int*)malloc(game->stack.numCards * sizeof(int));
-    memset(sortedCards, -1, sizeof(int) * game->stack.numCards);
+    int* sortedCards = (int*)calloc(game->stack.numCards, sizeof(int));
     for(int i = 0; i < game->stack.numCards; i++) {
         int max = 0;
         for(int j = 0; j < game->stack.numCards; j++) { // descending cost
             if(has_element(sortedCards, game->stack.numCards, j)) {
-                continue;
+                continue; // skip if already in sortedCards
             }
             int sum = sum_tokens(game->stack.deck[j]); 
             if(max < sum) {
@@ -42,19 +41,24 @@ int choose_card(Game* game) {
     int validCardNum = game->stack.numCards; // prune unaffordable cards
     for(int i = 0; i < game->stack.numCards; i++) {
         if(!can_afford(game->stack.deck[sortedCards[i]], 
-                    game->tokens, game->wild)) {
+                game->ownedTokens, game->wild)) {
             sortedCards[i] = -1;
             validCardNum--;
         }
     }
 
     int max = 0;
+    int chosenCard = -1;
     for(int i = game->stack.numCards - 1; i > -1; i--) { // reversed to ascend
-        if(sortedCards[i] > -1 && // choose biggest from remaining
+        if(sortedCards[i] > 0 && // choose biggest from remaining
                 game->stack.deck[sortedCards[i]][POINTS] > max) {
             chosenCard = sortedCards[i];
         }
     }
+
+#ifdef TEST
+    printf("can afford %d cards, chose %d\n", validCardNum, chosenCard);
+#endif
     
     free(sortedCards);
     return chosenCard;
@@ -72,13 +76,12 @@ Msg* shenzi_move(Game* game) {
 
     Msg* msg = (Msg*)malloc(sizeof(Msg));
     int chosenCard = choose_card(game);
-    if(chosenCard > -1) { // if valid card found
+    if(chosenCard > 0) { // if valid card found
         msg->type = PURCHASE;
         msg->card = chosenCard;
         msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
         memcpy(msg->info, game->stack.deck[chosenCard], 
                 sizeof(int) * CARD_SIZE);
-        remove_card(&game->stack, chosenCard);
     } else { // take tokens
         // TODO figure out why shenzi doesnt take tokens
         int tokenOrder[] = {PURPLE - 2, BROWN - 2, YELLOW - 2, RED - 2};
@@ -86,16 +89,21 @@ Msg* shenzi_move(Game* game) {
         if(tokens) {
             msg->type = TAKE;
             msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
-            for(int i = PURPLE; i < CARD_SIZE; i++) {
-                msg->info[i] = tokens[i - 2];
-            }
+            /*for(int i = 0; i < TOKEN_SIZE; i++) {
+                msg->info[i + 2] = tokens[i];
+            }*/
+            memcpy(msg->info + 2, tokens, sizeof(int) * TOKEN_SIZE);
+#ifdef TEST
+            printf("taking:\t%d,%d,%d,%d\n", 
+                    tokens[0], tokens[1], tokens[2], tokens[3]);
+#endif
             free(tokens);
         } else { // take wild token
             msg->type = WILD;
         }
     }
 
-#ifdef TEST 
+#ifdef VERBOSE 
     printf("doing move %d\n", msg->type);
 #endif
 

@@ -96,6 +96,10 @@ Error add_card(Stack* stack, char color, int points,
  *          OK otherwise
  */
 Error remove_card(Stack* stack, int card) {
+#ifdef TEST
+    printf("remove:\tcard[%d]\n", card);
+#endif
+
     if (card > stack->numCards - 1) {
         return ERR;
     }

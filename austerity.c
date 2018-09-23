@@ -56,7 +56,7 @@ void kill_players(int pCount, Player* players) {
             printf("sending sigkill to %d\n", players[i].pid);
 #endif
 
-            kill(players[i].pid, SIGKILL);
+            kill(players[i].pid, SIGTERM); // or SIGKILL?
         }
     }
 }
@@ -69,7 +69,7 @@ void kill_players(int pCount, Player* players) {
  */
 void end_game(Game* game, Session* session, Error err) {
 #ifdef TEST
-        printf("exit:\tgot code %d\n", err);
+    printf("exit:\tgot code %d\n", err);
 #endif
 
     shred_deck(game->stack.deck, game->stack.numCards);

@@ -1,6 +1,7 @@
 #ifndef CARD_H
 #define CARD_H
 
+#include <stdio.h>
 #include "err.h"
 
 // number of fields in a card

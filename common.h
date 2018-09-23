@@ -10,6 +10,7 @@
 #define LINE_BUFF 50
 #define TOKEN_SIZE 4
 #define MAX_PLAYERS 26
+#define TOCHAR 65
 
 // struct containing information relevant to the game
 // for the hub, pID is unused, numPoints contains the winning number of points
@@ -24,6 +25,7 @@ typedef struct {
     Stack stack;
     Stack ownedCards;
     int tokens[4];
+    int ownedTokens[4];
     int wild;
 } Game;
 

@@ -20,6 +20,10 @@ void signal_handler(int signal) {
     globalSignal = signal;
 }
 
+/*
+ * returns the current state of globalSignal
+ * returns: current state of globalSignal
+ */
 int check_signal(void) {
     return globalSignal;
 }
