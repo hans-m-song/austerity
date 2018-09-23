@@ -23,9 +23,9 @@ typedef struct {
     int pCount;
     int numPoints;
     Stack stack;
-    Stack ownedCards;
-    int tokens[4];
-    int ownedTokens[4];
+    int discount[TOKEN_SIZE];
+    int tokens[TOKEN_SIZE];
+    int ownedTokens[TOKEN_SIZE];
     int wild;
 } Game;
 

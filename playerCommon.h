@@ -10,7 +10,7 @@
 
 typedef struct {
     int id;
-    int points;
+    int numPoints;
     int discount[4];
     int tokens[4];
     int wild;

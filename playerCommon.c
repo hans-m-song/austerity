@@ -51,7 +51,7 @@ void init_player_game(int pID, int pCount, Game* game) {
     game->pCount = pCount;
     game->numPoints = 0;
     game->stack.numCards = 0;
-    game->ownedCards.numCards = 0;
+    memset(game->discount, 0, sizeof(int) * TOKEN_SIZE);
     memset(game->tokens, 0, sizeof(int) * TOKEN_SIZE);
     memset(game->ownedTokens, 0, sizeof(int) * TOKEN_SIZE);
     game->wild = 0;
@@ -67,7 +67,7 @@ Opponent* init_opponents(int pCount) {
     
     for(int i = 0; i < pCount; i++) {
         opponents[i].id = i;
-        opponents[i].points = 0;
+        opponents[i].numPoints = 0;
         memset(opponents[i].discount, 0, sizeof(int) * TOKEN_SIZE);
         memset(opponents[i].tokens, 0, sizeof(int) * TOKEN_SIZE);
         opponents[i].wild = 0;
@@ -86,21 +86,21 @@ Error print_winners(int pCount, Opponent* opponents) {
     fprintf(stderr, "Game over. Winners are ");
     int max = 0;
     for(int i = 0; i < pCount; i++) {
-        if(max < opponents[i].points) {
-            max = opponents[i].points;
+        if(max < opponents[i].numPoints) {
+            max = opponents[i].numPoints;
         }
     }
 
     // TODO test winning players
     int count = 0;
     for(int i = 0; i < pCount; i++) {
-        if(opponents[i].points == max) {
+        if(opponents[i].numPoints == max) {
             count++;
         }
     }
 
     for(int i = 0; i < pCount; i++) {
-        if(opponents[i].points == max) {
+        if(opponents[i].numPoints == max) {
             fprintf(stderr, "%c", (char)(i + TOCHAR));
             if(--count) {
                 fprintf(stderr, ",");
@@ -159,9 +159,28 @@ Error newcard(Game* game, Msg* msg) {
  *          OK otherwise
  */
 Error bought_card(Game* game, Opponent* opponents, Msg* msg) {
-    opponents[(int)(msg->player - TOCHAR)].points += msg->info[POINTS];
-    // TODO update tokens
-    // TODO update discoun
+    opponents[(int)(msg->player - TOCHAR)].numPoints += msg->info[POINTS];
+    int discountColor = 0;
+    switch(game->stack.deck[msg->card][COLOR]) { // do nothing if purple
+        case 'B':
+            discountColor = 1;
+            break;
+        case 'Y':
+            discountColor = 2;
+            break;
+        case 'R':
+            discountColor = 3;
+    }
+    opponents[(int)(msg->player - TOCHAR)].discount[discountColor] += 1;
+    game->discount[discountColor] += 1;
+    game->numPoints += game->stack.deck[msg->card][POINTS];
+    opponents[(int)(msg->player - TOCHAR)].numPoints += 
+        game->stack.deck[msg->card][POINTS];
+
+    game->tokens[0] += msg->info[PURPLE];
+    game->tokens[1] += msg->info[BROWN];
+    game->tokens[2] += msg->info[YELLOW];
+    game->tokens[3] += msg->info[RED];
 
     opponents[(int)(msg->player - TOCHAR)].tokens[0] -= msg->info[PURPLE];
     opponents[(int)(msg->player - TOCHAR)].tokens[1] -= msg->info[BROWN]; 
@@ -222,7 +241,7 @@ int can_afford(Card card, int tokens[TOKEN_SIZE], int wild) {
  *          err - error status of game
  */
 void print_status(Game* game, Opponent* opponents, int msgType, Error err) {
-    if(msgType == EOG || err != OK) {
+    if(msgType == DOWHAT || msgType == EOG || err != OK) {
         return;
     }
 
@@ -230,7 +249,7 @@ void print_status(Game* game, Opponent* opponents, int msgType, Error err) {
     for(int i = 0; i < game->pCount; i++) {
         fprintf(stderr, "Player %c:%d:Discounts=%d,%d,%d,%d"
                 ":Tokens=%d,%d,%d,%d,%d\n", 
-                (char)(opponents[i].id + TOCHAR), opponents[i].points,
+                (char)(opponents[i].id + TOCHAR), opponents[i].numPoints,
                 opponents[i].discount[0], opponents[i].discount[1], 
                 opponents[i].discount[2], opponents[i].discount[3],
                 opponents[i].tokens[0], opponents[i].tokens[1],
