@@ -77,6 +77,8 @@ char* encode_hub(Msg* msg) {
             free(output);
             return NULL;
     }
+    char newline[] = "\n";
+    strcat(output, newline);
 
     return output;
 }

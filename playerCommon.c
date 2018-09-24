@@ -123,13 +123,24 @@ Error print_winners(int pCount, Opponent* opponents) {
 Error send_move(Game* game, Msg* msg) {
     fprintf(stderr, "Received dowhat\n");
     msg->player = game->pID + TOCHAR;    
+    
     char* encodedMsg = encode_player(msg);
+    if(!encodedMsg) {
+        if(msg->type == PURCHASE || msg->type == TAKE) {
+            free(msg->info);
+        }
+
+        return E_COMMERR;
+    }
+   
     fprintf(stdout, "%s\n", encodedMsg);
     free(encodedMsg);
+    
     if(msg->type == PURCHASE || msg->type == TAKE) {
         free(msg->info);
     }
     free(msg);
+    
     if(check_signal()) {
         return E_COMMERR;
     }
@@ -171,66 +182,30 @@ Error bought_card(Game* game, Opponent* opponents, Msg* msg) {
         case 'R':
             discountColor = 3;
     }
+
     opponents[(int)(msg->player - TOCHAR)].discount[discountColor] += 1;
-    game->discount[discountColor] += 1;
-    game->numPoints += game->stack.deck[msg->card][POINTS];
     opponents[(int)(msg->player - TOCHAR)].numPoints += 
-        game->stack.deck[msg->card][POINTS];
-
-    game->tokens[0] += msg->info[PURPLE];
-    game->tokens[1] += msg->info[BROWN];
-    game->tokens[2] += msg->info[YELLOW];
-    game->tokens[3] += msg->info[RED];
-
-    opponents[(int)(msg->player - TOCHAR)].tokens[0] -= msg->info[PURPLE];
-    opponents[(int)(msg->player - TOCHAR)].tokens[1] -= msg->info[BROWN]; 
-    opponents[(int)(msg->player - TOCHAR)].tokens[2] -= msg->info[YELLOW];
-    opponents[(int)(msg->player - TOCHAR)].tokens[3] -= msg->info[RED];
+            game->stack.deck[msg->card][POINTS];
     opponents[(int)(msg->player - TOCHAR)].wild -= msg->wild;
-
+   
     if(msg->player == game->pID + TOCHAR) {
-        game->ownedTokens[0] -= msg->info[PURPLE];
-        game->ownedTokens[1] -= msg->info[BROWN];
-        game->ownedTokens[2] -= msg->info[YELLOW];
-        game->ownedTokens[3] -= msg->info[RED];
-        game->wild -= msg->wild;
+        game->discount[discountColor] += 1;
+        game->numPoints += game->stack.deck[msg->card][POINTS];
     }
     
     Error err = OK;
+    
+    err = returned_tokens(game, msg->info, msg->wild, opponents, msg->player);
+    if(err) {
+        return E_COMMERR;
+    }
+    
     err = remove_card(&game->stack, msg->card);
     if(err) {
         return E_COMMERR;
     }
 
     return OK;
-}
-
-/*
- * checks if player can afford the card with their owned tokens
- * params:  card - card to purchase
- *          tokens - players owned tokens
- *          wild - number of owned wild tokens
- * returns: 0 if cannot afford,
- *          1 otherwise
- */
-int can_afford(Card card, int tokens[TOKEN_SIZE], int wild) {
-    int ownedTokens[TOKEN_SIZE];
-    memcpy(ownedTokens, tokens, TOKEN_SIZE * sizeof(int));
-    int usedWild = 0;
-    for(int i = 0; i < TOKEN_SIZE; i++) {
-        if(card[i + 2] > ownedTokens[i] + wild - usedWild) {
-            return 0;
-        }
-
-        if(card[i + 2] > ownedTokens[i]) {
-            usedWild += card[i + 2] - ownedTokens[i];
-            ownedTokens[i] = 0;
-        } else {
-            ownedTokens[i] -= card[i + 2];
-        }
-    }
-    
-    return 1;
 }
 
 /*
@@ -295,7 +270,7 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
                 err = bought_card(game, opponents, &msg);
                 break;
             case TOOK:
-                err = update_tokens(game, msg.info, opponents, msg.player);
+                err = took_tokens(game, msg.info, opponents, msg.player);
                 break;
             case WILD:
                 update_wild(game, opponents, msg.player);
