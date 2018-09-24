@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include "common.h"
 #include "err.h"
 
@@ -73,5 +74,22 @@ int has_element(int* array, int len, int element) {
             return 1;
         }
     }
+
     return 0;
+}
+
+/*
+ * checks if string contains only numbers
+ * params:  input - string to check
+ * returns: 1 if all numbers,
+ *          0 otherwise
+ */
+int is_all_num(char* input) {
+    for(int i = 0; i < (int)strlen(input); i++) {
+        if(!isdigit((int)input[i])) {
+            return 0;
+        }
+    }
+    
+    return 1;
 }

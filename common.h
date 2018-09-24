@@ -37,5 +37,7 @@ void concat(char* input1, char* input2);
 
 int has_element(int* array, int len, int element);
 
+int is_all_num(char* input);
+
 #endif
 
