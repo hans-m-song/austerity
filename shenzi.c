@@ -189,8 +189,9 @@ int main(int argc, char** argv) {
     
     if(game.stack.numCards) {
         shred_deck(game.stack.deck, game.stack.numCards);
+    } else {
+        free(game.stack.deck);
     }
-    free(game.stack.deck);
 
 #ifdef TEST
     printf("shenzi exiting\n");

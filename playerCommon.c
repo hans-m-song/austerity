@@ -205,6 +205,10 @@ Error bought_card(Game* game, Opponent* opponents, Msg* msg) {
         return E_COMMERR;
     }
 
+    if(check_signal()) {
+        return E_COMMERR;
+    }
+
     return OK;
 }
 
@@ -216,7 +220,7 @@ Error bought_card(Game* game, Opponent* opponents, Msg* msg) {
  *          err - error status of game
  */
 void print_status(Game* game, Opponent* opponents, int msgType, Error err) {
-    if(msgType == DOWHAT || msgType == EOG || err != OK) {
+    if(msgType == DOWHAT || msgType == EOG || err != OK || check_signal()) {
         return;
     }
 
@@ -246,9 +250,10 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
     Msg msg;
     msg.info = (Card)malloc(sizeof(int) * CARD_SIZE);
     Opponent* opponents = init_opponents(game->pCount);
-    while(err == OK) {
+    while(err == OK && !check_signal()) {
         line = read_line(stdin);
-        if(line == NULL || (int)decode_hub_msg(&msg, line) == ERR) {
+        if(line == NULL || (int)decode_hub_msg(&msg, line) == ERR ||
+                check_signal()) {
             err = E_COMMERR;
             break;
         }

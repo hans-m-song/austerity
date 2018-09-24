@@ -29,7 +29,7 @@ char* read_line(FILE* input) {
     int i = 0;
     while(1) {
         i = fgetc(input);
-        if(i == EOF) {
+        if(i == EOF || i == ' ') {
             free(result);
             return NULL;
         }

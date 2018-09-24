@@ -6,7 +6,7 @@
 /*
  * global variables used to tell if a signal has been caught
  */
-int globalSignal = 0;
+volatile sig_atomic_t globalSignal = 0;
 
 /*
  * signal handler for catching signals, sets the globalSignal flag
@@ -30,9 +30,14 @@ int check_signal(void) {
 
 /*
  * registers the signal handler to the relevant signals
+ * params:  signalList - signals to register
+ *          len - number of signals
  */
 void init_signal_handler(int signalList[], int len) {
-    globalSignal = 0;
+    //struct sigaction* sigact = (sigaction*)malloc(sizeof(struct sigaction));
+    struct sigaction sigact;
+    sigact.sa_handler = &signal_handler;
+    sigact.sa_flags = SA_RESTART;
 
     // only catch relevant signals
     for(int i = 0; i < len; i++) {
@@ -40,7 +45,8 @@ void init_signal_handler(int signalList[], int len) {
         printf("register signal %d\n", signalList[i]);
 #endif
         
-        signal(signalList[i], signal_handler);
+        sigaction(signalList[i], &sigact, NULL);
+        //signal(signalList[i], signal_handler);
     }
 
 }
