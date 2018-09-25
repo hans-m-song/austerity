@@ -121,26 +121,6 @@ Error returned_tokens(Game* game, Card card, int wild, Opponent* opponents,
         game->wild -= wild;
     }
 
-    /*
-    game->tokens[0] += card[PURPLE];
-    game->tokens[1] += card[BROWN];
-    game->tokens[2] += card[YELLOW];
-    game->tokens[3] += card[RED];
-
-    opponents[(int)(player - TOCHAR)].tokens[0] -= card[PURPLE];
-    opponents[(int)(player - TOCHAR)].tokens[1] -= card[BROWN]; 
-    opponents[(int)(player - TOCHAR)].tokens[2] -= card[YELLOW];
-    opponents[(int)(player - TOCHAR)].tokens[3] -= card[RED];
-    opponents[(int)(player - TOCHAR)].wild -= wild;
-
-    if(player == game->pID + TOCHAR) {
-        game->ownedTokens[0] -= card[PURPLE];
-        game->ownedTokens[1] -= card[BROWN];
-        game->ownedTokens[2] -= card[YELLOW];
-        game->ownedTokens[3] -= card[RED];
-    }
-    */
-
     return OK;
 }
 
@@ -191,36 +171,19 @@ Error set_tokens(Game* game, int numTokens) {
  *          number of wild tokens used otherwise
  */
 int can_afford(Card card, int* discount, int* tokens, int wild) {
-    int ownedTokens[TOKEN_SIZE];
-    memcpy(ownedTokens, tokens, TOKEN_SIZE * sizeof(int));
     int usedWild = 0;
     for(int i = 0; i < TOKEN_SIZE; i++) {
-        if(card[i + 2] - discount[i] > ownedTokens[i] + wild - usedWild) {
+        int cost = card[i + 2] - discount[i];
+        if(cost > tokens[i] + wild - usedWild) {
             return -1;
         }
-
-        if(card[i + 2] - discount[i] > ownedTokens[i]) {
-            usedWild += card[i + 2] - discount[i] - ownedTokens[i];
-            ownedTokens[i] = 0;
-        } else {
-            ownedTokens[i] -= card[i + 2] - discount[i];
+        
+        if(cost > tokens[i]) {
+            usedWild += cost - tokens[i];
         }
     }
-    
+        
     return usedWild;
-}
-
-/*
- * adds up the token cost of a card
- * params:  card - struct containing card details
- * returns: sum of token costs of a card
- */
-int sum_tokens(Card card) {
-    int total = 0;
-    for(int i = 0; i < TOKEN_SIZE; i++) {
-        total += card[i + 2];
-    }
-    return total;
 }
 
 /*
@@ -255,4 +218,28 @@ int* get_card_cost(int* discount, int* tokens, Card card) {
     }
 
     return usedTokens;
+}
+
+/*
+ * adds up the token cost of a card
+ * params:  card - struct containing card details
+ *          discount - players discount (if any)
+ * returns: sum of token costs of a card
+ */
+int sum_tokens(Card card, int* discount) {
+    int total = 0;
+    for(int i = 0; i < TOKEN_SIZE; i++) {
+        if(card[i + 2]) {
+            total += card[i + 2] - discount[i];
+
+#ifdef TEST
+            if(discount[i]) {
+                printf("discount[%d] of %d applied\n", i, discount[i]);
+            }
+#endif
+        }
+
+    }
+    
+    return total;
 }

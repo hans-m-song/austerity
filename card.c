@@ -12,15 +12,17 @@
  *          position - place in stack
  */
 void print_card(Card card, int position) {
-#ifdef VERBOSE 
-    printf("print:\tcard %c:%d:%d,%d,%d,%d\n", 
-            (char)card[COLOR], card[POINTS], 
+#ifdef TEST 
+    printf("print:\tcard[%d] %c:%d:%d,%d,%d,%d\n", 
+            position,  (char)card[COLOR], card[POINTS], 
             card[PURPLE], card[BROWN], card[YELLOW], card[RED]);
 #endif
 
+#ifndef TEST
     fprintf(stderr, "Card %d:%c/%d/%d,%d,%d,%d\n", 
             position, (char)card[COLOR], card[POINTS], 
             card[PURPLE], card[BROWN], card[YELLOW], card[RED]);
+#endif
 }
 
 /*
@@ -74,7 +76,7 @@ Error add_card(Stack* stack, char color, int points,
     stack->deck[stack->numCards][YELLOW] = yellow;
     stack->deck[stack->numCards][RED] = red;
 
-#ifdef TEST 
+#ifdef VERBOSE 
     printf("saved:\tcard[%d] %c:%d:%d,%d,%d,%d\n", stack->numCards,
             (char)stack->deck[stack->numCards][COLOR], 
             stack->deck[stack->numCards][POINTS],

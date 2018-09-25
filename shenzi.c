@@ -82,11 +82,13 @@ int choose_card(Game* game) {
             }
         }
 
-        int min = sum_tokens(game->stack.deck[validCards[0]]);
+        int min = sum_tokens(game->stack.deck[validCards[0]], game->discount);
         chosenCard = validCards[0];
         for(int i = 0; i < duplicates; i++) { // find cheapest
-            if(min > sum_tokens(game->stack.deck[validCards[i]])) {
-                min = sum_tokens(game->stack.deck[validCards[i]]);
+            int sum = sum_tokens(game->stack.deck[validCards[i]], 
+                        game->discount);
+            if(min >= sum) {
+                min = sum;
                 chosenCard = validCards[i];
             }
         }
@@ -94,8 +96,9 @@ int choose_card(Game* game) {
     }
 
 #ifdef TEST
-    printf("sorted deck:\n");
-    for(int i = 0; i < validCardNum; i++) {
+    for(int i = 0; i < validCardNum && validCardNum; i++) {
+        printf("cost:%d, ", sum_tokens(game->stack.deck[validCards[i]],
+                    game->discount));
         print_card(game->stack.deck[validCards[i]], validCards[i]);
     }
     printf("can afford %d cards, had %d duplicates, chose %d\n", 
@@ -114,10 +117,13 @@ int choose_card(Game* game) {
  */
 Msg* shenzi_move(Game* game) {
 #ifdef TEST
-    printf("shenzi[%d] move, tokens:%d,%d,%d,%d,%d\n", game->pID,
+    printf("shenzi[%d] move, tokens:%d,%d,%d,%d,%d, discount:%d,%d,%d,%d\n", 
+            game->pID,
             game->ownedTokens[0], game->ownedTokens[1], 
             game->ownedTokens[2], game->ownedTokens[3],
-            game->wild);
+            game->wild,
+            game->discount[0], game->discount[1],
+            game->discount[2], game->discount[3]);
 #endif
 
     Msg* msg = (Msg*)malloc(sizeof(Msg));
