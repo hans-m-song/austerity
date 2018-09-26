@@ -25,7 +25,7 @@ Msg* banzai_move(Game* game) {
 
     Msg* msg = (Msg*)malloc(sizeof(Msg));
     msg->type = WILD;
-    msg->player =game->pID + TOCHAR;
+    msg->player = game->pID + TOCHAR;
     return msg;
 }
 

@@ -25,8 +25,8 @@ Error hub_init(char** argv, Game* game) {
     long int numTokens = strtol(argv[1], &temp, 10);
     long int numPoints = strtol(argv[2], &temp, 10);
 
-    if(numTokens < 0 || numTokens > INT_MAX ||
-            numPoints < 0 || numPoints > INT_MAX) {
+    if(numTokens < 0 || numTokens > INT_MAX || !is_all_num(argv[1]) ||
+            numPoints < 0 || numPoints > INT_MAX || !is_all_num(argv[2])) {
         return E_ARGV;
     }
     for(int i = 0; i < TOKEN_SIZE; i++) {
@@ -46,7 +46,7 @@ Error hub_init(char** argv, Game* game) {
     }
     fclose(deckFile);
 
-#ifdef TEST
+#ifdef VERBOSE
     print_deck(game->stack.deck, game->stack.numCards);
 #endif
 

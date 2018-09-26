@@ -17,17 +17,15 @@
 Error send_msg(Msg* msg, int destination) {
     char* encodedMsg = encode_hub(msg);
     if(!encodedMsg) {
-        encodedMsg = encode_player(msg);
-    }
-    if(!encodedMsg) {
         return E_PROTOCOL;
     }
 
     dprintf(destination, encodedMsg);
     free(encodedMsg);
-
-    if(check_signal()) {
-        return E_DEADPLAYER;
+    
+    int signal = check_signal();
+    if(signal) {
+        return signal;
     }
 
     return OK;

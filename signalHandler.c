@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
+#include <unistd.h>
+#include "err.h"
 #include "signalHandler.h"
 
 /*
@@ -15,7 +17,7 @@ volatile sig_atomic_t globalSignal = 0;
  */
 void signal_handler(int signal) {
 #ifdef TEST
-    fprintf(stdout, "signal %d caught\n", signal);
+    fprintf(stdout, "[%d]signal %d caught\n", getpid(), signal);
 #endif
 
     globalSignal = signal;
@@ -23,10 +25,20 @@ void signal_handler(int signal) {
 
 /*
  * returns the current state of globalSignal
- * returns: current state of globalSignal
+ * returns: E_SIGINT, E_DEADPLAYER based on the state of globalSignal
  */
 int check_signal(void) {
-    return globalSignal;
+    //return globalSignal;
+    switch(globalSignal) {
+        case SIGINT:
+            return E_SIGINT;
+        case SIGCHLD:
+            return E_DEADPLAYER;
+        case SIGPIPE:
+            return E_DEADPLAYER;
+        default:
+            return OK;
+    }
 }
 
 /*

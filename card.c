@@ -164,6 +164,7 @@ char* card_to_string(Card card) {
     strcpy(output, color);
     char* temp = to_string(card[1]);
     strcat(output, temp);
+    free(temp);
     strcat(output, ":");
     for(int i = PURPLE; i < CARD_SIZE; i++) {
         char* temp = to_string(card[i]); 

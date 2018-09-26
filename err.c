@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "err.h"
 
 /*
@@ -37,13 +38,12 @@ void perr_msg(Error code, int pType) {
  * params:  code - a number corresponding to an game ending error
  */
 void herr_msg(Error code) {
-    char* str = "Usage: austerity tokens points "
-            "deck player player [player ...]\n";
     switch(code) {
         case OK:
             return;
         case E_ARGC:
-            fprintf(stderr, str);
+            fprintf(stderr, "Usage: austerity tokens points "
+                    "deck player player [player ...]\n");
             break;
         case E_ARGV:
             fprintf(stderr, "Bad argument\n");
