@@ -51,6 +51,7 @@ void init_player_game(int pID, int pCount, Game* game) {
     game->pCount = pCount;
     game->numPoints = 0;
     game->stack.numCards = 0;
+    game->stack.deck = (Deck)malloc(sizeof(Card));
     memset(game->discount, 0, sizeof(int) * TOKEN_SIZE);
     memset(game->tokens, 0, sizeof(int) * TOKEN_SIZE);
     memset(game->ownedTokens, 0, sizeof(int) * TOKEN_SIZE);
@@ -146,19 +147,6 @@ Error send_move(Game* game, Msg* msg) {
     }
 
     return OK;
-}
-
-/*
- * adds the information about the card from the message to the stack
- * params:  game - struct containing relevang game information
- *          msg - struct containing information from the hub
- * returns: ERR if addcard fails,
- *          OK otherwise
- */
-Error newcard(Game* game, Msg* msg) {
-    return add_card(&game->stack, msg->info[COLOR], msg->info[POINTS], 
-            msg->info[PURPLE], msg->info[BROWN], 
-            msg->info[YELLOW], msg->info[RED]);
 }
 
 /*
@@ -269,7 +257,7 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
                 err = set_tokens(game, msg.tokens);
                 break;
             case NEWCARD:
-                err = newcard(game, &msg);
+                err = new_card(&game->stack, msg.info);
                 break;
             case PURCHASED:
                 err = bought_card(game, opponents, &msg);

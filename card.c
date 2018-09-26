@@ -36,6 +36,38 @@ void print_deck(Deck deck, int numCards) {
     }
 }
 
+/*
+ * a wrapper for add_card and remove_card, 
+ * moves card from stack1 to stack2
+ * params:  stack - struct containing deck and number of cards
+ *          card - int array containing information about card
+ * returns: ERR if addcard fails,
+ *          OK otherwise
+ */
+Error move_card(Stack* source, Stack* destination, int card) {
+    if(new_card(destination, source->deck[card]) != OK) {
+        return ERR;
+    }
+
+    if(remove_card(source, card) != OK) {
+        return ERR;
+    }
+
+    return OK;
+}
+
+/*
+ * a wrapper for add_card, taking a card struct instead of explicit values
+ * params:  stack - struct containing deck and number of cards
+ *          card - int array containing information about card
+ * returns: ERR if addcard fails,
+ *          OK otherwise
+ */
+Error new_card(Stack* stack, Card card) {
+    return add_card(stack, card[COLOR], card[POINTS], 
+            card[PURPLE], card[BROWN], 
+            card[YELLOW], card[RED]);
+}
 
 /*
  * increases size of deck and stores the new card
@@ -49,14 +81,8 @@ void print_deck(Deck deck, int numCards) {
 Error add_card(Stack* stack, char color, int points, 
         int purple, int brown, int yellow, int red) {
     if(stack->numCards) {
-        stack->deck = (Deck)realloc(stack->deck, 
+        stack->deck = (Deck)realloc(stack->deck,
                 sizeof(Card) * (stack->numCards + 1));
-    } else {
-        stack->deck = (Deck)malloc(sizeof(Card));
-    }
-
-    if(!stack->deck) {
-        return ERR;
     }
 
 #ifdef VERBOSE

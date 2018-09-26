@@ -8,30 +8,6 @@
 #include "signalHandler.h"
 
 /*
- * TODO send_msg takes the message and pipes it through the given fd
- * params:  destination - fd to send message to
- *          msg - message to send
- * returns: E_DEADPLAYER if pipe closed unexpectedly
- *          OK otherwise
- */
-Error send_msg(Msg* msg, int destination) {
-    char* encodedMsg = encode_hub(msg);
-    if(!encodedMsg) {
-        return E_PROTOCOL;
-    }
-
-    dprintf(destination, encodedMsg);
-    free(encodedMsg);
-    
-    int signal = check_signal();
-    if(signal) {
-        return signal;
-    }
-
-    return OK;
-}
-
-/*
  * encodes a message and saves it into the given output
  * params:  msg - struct containing message details
  *          output - string containing encoded message
@@ -116,6 +92,9 @@ char* encode_player(Msg* msg) {
         default:
             break;
     }
+    char newline[] = "\n";
+    strcat(output, newline);
+
     return output;
 }
 
@@ -163,7 +142,7 @@ Comm decode_hub_msg(Msg* msg, char* input) {
             save_info(msg->info, (char)0, 0, purple, brown, yellow, red);
         } else {
 #ifdef TEST
-            printf("invalid:\thub=%s\n", input);
+            printf("invalid message: %s\n", input);
 #endif
             free(input);
             return ERR;
@@ -206,6 +185,9 @@ Comm decode_player_msg(Msg* msg, char* input) {
         msg->type = TAKE;
         save_info(msg->info, (char)0, 0, purple, brown, yellow, red);
     } else {
+#ifdef TEST
+        printf("invalid message: %s\n", input);
+#endif
         free(input);
         return ERR;
     }

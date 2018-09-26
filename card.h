@@ -27,6 +27,10 @@ void print_card(Card card, int position);
 
 void print_deck(Deck deck, int numCards);
 
+Error move_card(Stack* source, Stack* destination, int card);
+
+Error new_card(Stack* stack, Card card);
+
 Error add_card(Stack* stack, char color, int points,
         int purple, int brown, int yellow, int red);
 

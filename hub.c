@@ -8,6 +8,7 @@
 #include "common.h"
 #include "comms.h"
 #include "hub.h"
+#include "signalHandler.h"
 
 /*
  * checks invocation arguments and saves into session memory
@@ -40,7 +41,10 @@ Error hub_init(char** argv, Game* game) {
     }
 
     game->stack.numCards = 0;
-    if(read_deck(deckFile, &game->stack) != OK) {
+    game->stack.deck = (Deck)malloc(sizeof(Card));
+    game->hubStack.numCards = 0;
+    game->hubStack.deck = (Deck)malloc(sizeof(Card));
+    if(read_deck(deckFile, &game->hubStack) != OK) {
         fclose(deckFile);
         return E_DECKR;
     }
@@ -71,6 +75,30 @@ Error broadcast(int pCount, Player* players, Msg* msg) {
 
     if(err) {
         return E_DEADPLAYER;
+    }
+
+    return OK;
+}
+
+/*
+ * TODO send_msg takes the message and pipes it through the given fd
+ * params:  destination - fd to send message to
+ *          msg - message to send
+ * returns: E_DEADPLAYER if pipe closed unexpectedly
+ *          OK otherwise
+ */
+Error send_msg(Msg* msg, int destination) {
+    char* encodedMsg = encode_hub(msg);
+    if(!encodedMsg) {
+        return E_PROTOCOL;
+    }
+
+    dprintf(destination, encodedMsg);
+    free(encodedMsg);
+    
+    int signal = check_signal();
+    if(signal) {
+        return signal;
     }
 
     return OK;

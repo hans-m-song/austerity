@@ -13,16 +13,15 @@
 #define TOCHAR 65
 
 // struct containing information relevant to the game
-// for the hub, pID is unused, numPoints contains the winning number of points
-// required and numCards holds the total number of cards, the stack holds
-// all cards
-// for the player, tokens and numPoints indicate how many of each is owned 
-// by the player, the stack contains the owned cards
+// not all fields will be used by hub or player
+// e.g. pID is irrelevant for hub, hubStack will hold cards not in the game,
+// numPoints will either be the winning amount or the amount currently owned
 typedef struct {
     int pID;
     int pCount;
     int numPoints;
     Stack stack;
+    Stack hubStack;
     int discount[TOKEN_SIZE];
     int tokens[TOKEN_SIZE];
     int ownedTokens[TOKEN_SIZE];

@@ -15,11 +15,11 @@
 /*
  * clears memory used by hub
  * params:  game - struct containing relevant game information
- *          session - struct containing hub only information
  *          err - code to exit with
  */
 void end_game(Game* game, Session* session, Error err) {
     shred_deck(game->stack.deck, game->stack.numCards);
+    shred_deck(game->hubStack.deck, game->hubStack.numCards);
 
     if(session->parentPID == getpid()) {
         kill_players(game->pCount, session->players, err);
@@ -46,35 +46,37 @@ void end_game(Game* game, Session* session, Error err) {
  *          OK otherwise
  */
 Error send_tokens(int pCount, Player* players, int tokens) {
-    Msg msg;
-    msg.type = TOKENS;
-    msg.tokens = tokens;
+    Msg msg = {TOKENS, 0, tokens, 0, 0, 0};
     return broadcast(pCount, players, &msg); 
 }
 
 /*
- * creates the message to send a card to players
+ * creates the message to send a card to players, 
+ * moves card from hubstack to stack to keep track of cards in game
  * params:  game - struct containing relevant game information
  *          session - struct containing hub only information
- *          card - card in stack to send 
- *          (if -1, send 8 cards, if saved is less than 8, send all)
+ *          card - send topmost card or if -1, send 8 cards, 
+ *          if saved is less than 8, send all
  * returns: E_DEADPLAYER if client disconnects,
+ *          UTIL if utility operations fail
  *          OK otherwise
  */
 Error send_card(Game* game, Session* session, int card) {
     Error err = OK;
-    Msg msg;
-    msg.type = NEWCARD;
+    Msg msg = {NEWCARD, 0, 0, 0, 0, 0};
     msg.info = (Card)malloc(sizeof(int) * CARD_SIZE);
     if(card > -1) {
-        memcpy(msg.info, game->stack.deck[card], sizeof(int) * CARD_SIZE);
-        err = broadcast(game->pCount, session->players, &msg);
+        memcpy(msg.info, game->stack.deck[0], sizeof(int) * CARD_SIZE);
+        if(broadcast(game->pCount, session->players, &msg) != OK ||
+                move_card(&game->hubStack, &game->stack, 0) != OK) {
+            return UTIL;
+        }
     } else {
         for(int i = 0; i < game->stack.numCards && i < 8; i++) {
             memcpy(msg.info, game->stack.deck[i], sizeof(int) * CARD_SIZE);
-            err = broadcast(game->pCount, session->players, &msg);
-            if(err != OK) {
-                break;
+            if(broadcast(game->pCount, session->players, &msg) != OK ||
+                    move_card(&game->hubStack, &game->stack, 0) != OK) {
+                return UTIL;
             }
         }
     }
@@ -84,13 +86,67 @@ Error send_card(Game* game, Session* session, int card) {
 }
 
 /*
+ * checks if the players requested move is legal
+ * params:  game - struct containing relevant game information
+ *          msg - contents of message to check for validity
+ * returns: ERR if illegal,
+ *          OK otherwise
+ */
+Error valid_move() { //Game* game, Msg* msg) {
+    return OK;
+}
+
+/*
+ * asks player for their next move, reprompt on invalid move
+ * params:  game - struct containing relevant game information
+ *          player - player to retrieve response from
+ *          response - struct to save message contents to
+ * returns: type of message received
+ *          ERR if error encountered or reprompt returns invalid move
+ */
+Comm get_player_move(Game* game, Player player, Msg* response) {
+    Msg request = {DOWHAT, 0, 0, 0, 0, 0};
+    response->info = (Card)malloc(sizeof(int) * CARD_SIZE);
+    send_msg(&request, player.pipeOut[WRITE]);
+    
+    FILE* source = fdopen(player.pipeIn[READ], "r");
+    char* line = read_line(source);
+    if(line == NULL) {
+        return ERR;
+    }
+        
+    if((int)decode_player_msg(response, line) != ERR) {
+        if(valid_move(game, response) == OK) {
+#ifdef TEST
+            printf("got response: %d\n", response.type);
+#endif
+
+            return response->type;
+        }
+    }
+    
+    send_msg(&request, player.pipeOut[WRITE]); // reprompt
+    if((int)decode_player_msg(response, line) != ERR) {
+        if(valid_move(game, response) == OK) {
+#ifdef TEST
+            printf("got response after reprompt: %d\n", response.type);
+#endif
+
+            return response->type;
+        }
+    }
+
+    return ERR;
+}
+
+/*
  * main logic for the hub
  * params:  game - struct containing relevant game information
  *          session - struct containing hub only information
  * returns: E_DEADPLAYER if client disconnects,
  *          E_PROTOCOL if client is being naughty
  *          E_SIGINT if sigint was caught
- *          OK otherwise for end of stack
+ *          UTIL otherwise for end of game 
  */
 Error start_hub(Game* game, Session* session) {
     int signal = check_signal();
@@ -105,11 +161,28 @@ Error start_hub(Game* game, Session* session) {
 
     Error err = OK;
     while((signal = check_signal()), !signal && err == OK) {
-        // TODO game loop
-        // do loop here probably
-        return OK;
+        for(int i = 0; i < game->pCount; i++) {
+            Msg response;
+            Comm responseType = get_player_move(game, 
+                    session->players[i], &response);
+            if(responseType == PURCHASE) {
+
+            } else if(responseType == TOOK) {
+
+            } else if(responseType == WILD) {
+
+            } else {
+                return E_PROTOCOL;
+            }
+
+            if(signal = check_signal(), signal) {
+                return signal;
+            }
+            
+        }
+        // if end of game reached, err = UTIL;
     }
-    
+
     if(!err) {
         return signal;
     }
