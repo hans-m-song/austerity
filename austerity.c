@@ -44,19 +44,21 @@ Error start_hub(Game* game, Session* session) {
 void kill_players(int pCount, Player* players) {
     for(int i = 0; i < pCount; i++) {
 #ifdef TEST
-        printf("kill:\tplayer \t%d\n", players[i].pid);
+        printf("%d killing:\tplayer \t%d\n", getpid(), players[i].pid);
 #endif
         
-        int status;
+        int status = 0;
         dprintf(players[i].pipeOut[WRITE], "eog");
         if(!waitpid(players[i].pid, &status, WNOHANG)) {
             sleep(2);
 
+            if(!status) { // force kill
 #ifdef TEST
-            printf("sending sigkill to %d\n", players[i].pid);
+                printf("sending sigkill to %d\n", players[i].pid);
 #endif
 
-            kill(players[i].pid, SIGTERM); // or SIGKILL?
+                kill(players[i].pid, SIGTERM); // or SIGKILL?
+            }
         }
     }
 }
@@ -127,12 +129,13 @@ Error start_players(int pCount, char** players,
         char* totalPlayers = to_string(pCount);
         char* pID = to_string(i);
         char* args[] = {players[i], totalPlayers, pID, NULL};
+
 #ifdef TEST
         printf("exec:\t%s %s %s\n", args[0], args[1], args[2]);
 #endif
 
         pid_t pid = fork();
-        if(pid == ERR) { // failed to fork
+        if(pid < 0) { // failed to fork
             return E_EXEC;
         } else if(pid == 0) { // child
             //pipe_setup(session->players[i], 'c');
@@ -162,14 +165,12 @@ Error start_players(int pCount, char** players,
 
 
 int main(int argc, char** argv) {
-    int signalList[] = {SIGINT, SIGPIPE};
-    init_signal_handler(signalList, 2);
     Game game;
     Session session;
     session.parentPID = getpid();
 
 #ifdef TEST
-    printf("parentPID:\t%d\n", getpid());
+    printf("pPID:\t%d\n", getpid());
 #endif
     
     if(argc < 6 || argc - 4 > MAX_PLAYERS) {
@@ -183,19 +184,20 @@ int main(int argc, char** argv) {
         herr_msg(err);
         return err;
     }
+    
+    int signalList[] = {SIGINT, SIGPIPE};
+    init_signal_handler(signalList, 2);
 
-    err = start_players(argc - 4, argv + 4, &game, &session);
-    if(err) {
+    if(start_players(argc - 4, argv + 4, &game, &session) != OK ||
+            getpid() != session.parentPID) {
         end_game(&game, &session, E_EXEC);
-    }
+    } // no child should go past here
 
 #ifdef TEST
     printf("started %d players\n", game.pCount);
 #endif
 
-    if(getpid() == session.parentPID) { // only parent
-        err = start_hub(&game, &session);
-    }
+    err = start_hub(&game, &session);
     
 #ifdef TEST
     printf("reached end of game\n");

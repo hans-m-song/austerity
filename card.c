@@ -14,7 +14,7 @@
 void print_card(Card card, int position) {
 #ifdef TEST 
     printf("print:\tcard[%d] %c:%d:%d,%d,%d,%d\n", 
-            position,  (char)card[COLOR], card[POINTS], 
+            position, (char)card[COLOR], card[POINTS], 
             card[PURPLE], card[BROWN], card[YELLOW], card[RED]);
 #endif
 

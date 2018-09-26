@@ -86,7 +86,7 @@ int choose_card(Game* game) {
         chosenCard = validCards[0];
         for(int i = 0; i < duplicates; i++) { // find cheapest
             int sum = sum_tokens(game->stack.deck[validCards[i]], 
-                        game->discount);
+                    game->discount);
             if(min >= sum) {
                 min = sum;
                 chosenCard = validCards[i];
@@ -98,7 +98,7 @@ int choose_card(Game* game) {
 #ifdef TEST
     for(int i = 0; i < validCardNum && validCardNum; i++) {
         printf("cost:%d, ", sum_tokens(game->stack.deck[validCards[i]],
-                    game->discount));
+                game->discount));
         print_card(game->stack.deck[validCards[i]], validCards[i]);
     }
     printf("can afford %d cards, had %d duplicates, chose %d\n", 

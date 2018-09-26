@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     }
 
 #ifdef TEST
-    printf("shenzi exiting\n");
+    printf("ed exiting\n");
 #endif
 
     perr_msg(err, ED); 

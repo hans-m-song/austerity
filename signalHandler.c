@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <string.h>
 #include "signalHandler.h"
 
 /*
@@ -34,19 +35,17 @@ int check_signal(void) {
  *          len - number of signals
  */
 void init_signal_handler(int signalList[], int len) {
-    //struct sigaction* sigact = (sigaction*)malloc(sizeof(struct sigaction));
-    struct sigaction sigact;
-    sigact.sa_handler = &signal_handler;
-    sigact.sa_flags = SA_RESTART;
-
     // only catch relevant signals
     for(int i = 0; i < len; i++) {
 #ifdef TEST
         printf("register signal %d\n", signalList[i]);
 #endif
         
+        struct sigaction sigact;
+        memset(&sigact, 0, sizeof(sigact));
+        sigact.sa_handler = &signal_handler;
+        sigact.sa_flags = SA_RESTART;
         sigaction(signalList[i], &sigact, NULL);
-        //signal(signalList[i], signal_handler);
     }
 
 }
