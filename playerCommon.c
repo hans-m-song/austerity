@@ -133,6 +133,10 @@ Error send_move(Game* game, Msg* msg) {
 
         return E_COMMERR;
     }
+
+#ifdef TEST
+    fprintf(stderr, "sending to parent: %s\n", encodedMsg);
+#endif
    
     fprintf(stdout, "%s\n", encodedMsg);
     free(encodedMsg);
@@ -212,6 +216,10 @@ void print_status(Game* game, Opponent* opponents, int msgType, Error err) {
         return;
     }
 
+#ifdef TEST
+    return;
+#endif
+
     print_deck(game->stack.deck, game->stack.numCards);
     for(int i = 0; i < game->pCount; i++) {
         fprintf(stderr, "Player %c:%d:Discounts=%d,%d,%d,%d"
@@ -239,7 +247,7 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
     msg.info = (Card)malloc(sizeof(int) * CARD_SIZE);
     Opponent* opponents = init_opponents(game->pCount);
     while(err == OK && !check_signal()) {
-        line = read_line(stdin);
+        line = read_line(stdin, 0, 0);
         if(line == NULL || (int)decode_hub_msg(&msg, line) == ERR ||
                 check_signal()) {
             err = E_COMMERR;

@@ -53,8 +53,6 @@ Error hub_init(char** argv, Game* game) {
 #ifdef VERBOSE
     print_deck(game->stack.deck, game->stack.numCards);
 #endif
-
-    memset(game->tokens, 0, sizeof(int) * TOKEN_SIZE);
         
     return OK;
 }
@@ -70,7 +68,7 @@ Error hub_init(char** argv, Game* game) {
 Error broadcast(int pCount, Player* players, Msg* msg) {
     Error err;
     for(int i = 0; i < pCount; i++) {
-        err = send_msg(msg, players[i].pipeOut[WRITE]);
+        err = send_msg(msg, players[i].toChild);
     }
 
     if(err) {
@@ -82,18 +80,22 @@ Error broadcast(int pCount, Player* players, Msg* msg) {
 
 /*
  * TODO send_msg takes the message and pipes it through the given fd
- * params:  destination - fd to send message to
- *          msg - message to send
+ * params:  msg - message to send
+ *          destination - pipe to write to
  * returns: E_DEADPLAYER if pipe closed unexpectedly
  *          OK otherwise
  */
-Error send_msg(Msg* msg, int destination) {
+Error send_msg(Msg* msg, FILE* destination) {
     char* encodedMsg = encode_hub(msg);
     if(!encodedMsg) {
         return E_PROTOCOL;
     }
 
-    dprintf(destination, encodedMsg);
+#ifdef TEST
+    printf("sending to child: %s\n", encodedMsg);
+#endif
+
+    fprintf(destination, "%s\n", encodedMsg);
     free(encodedMsg);
     
     int signal = check_signal();

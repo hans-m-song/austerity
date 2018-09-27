@@ -5,6 +5,7 @@
 #include <limits.h>
 #include <signal.h>
 #include <unistd.h>
+#include <errno.h>
 #include "err.h"
 #include "common.h"
 #include "card.h"
@@ -19,7 +20,7 @@
  */
 void end_game(Game* game, Session* session, Error err) {
 #ifdef TEST
-    printf("err:%d\n", err);
+    fprintf(stderr, "[%d]exit:\tgot code %d\n", getpid(), err);
 #endif
 
     shred_deck(game->stack.deck, game->stack.numCards);
@@ -35,10 +36,6 @@ void end_game(Game* game, Session* session, Error err) {
     if(err) {
         exit(err);
     }
-
-#ifdef TEST
-    fprintf(stderr, "[%d]exit:\tgot code %d\n", getpid(), err);
-#endif
 }
 
 /*
@@ -104,43 +101,45 @@ Error valid_move() { //Game* game, Msg* msg) {
 Comm get_player_move(Game* game, Player player, Msg* response) {
     Msg request = {DOWHAT, 0, 0, 0, 0, 0};
     response->info = (Card)malloc(sizeof(int) * CARD_SIZE);
-    send_msg(&request, player.pipeOut[WRITE]);
-    
-    FILE* source = fdopen(player.pipeIn[READ], "r");
-    char* line = read_line(source);
-    if(line == NULL) {
-        fclose(source);
-        return ERR;
-    }
-        
-    if((int)decode_player_msg(response, line) != ERR) {
-        if(valid_move(game, response) == OK) {
-#ifdef TEST
-            printf("got response: %d\n", response->type);
-#endif
-            
-            fclose(source);
-            free(line);
-            return response->type;
-        }
-    }
-    
-    send_msg(&request, player.pipeOut[WRITE]); // reprompt
-    if((int)decode_player_msg(response, line) != ERR) {
-        if(valid_move(game, response) == OK) {
-#ifdef TEST
-            printf("got response after reprompt: %d\n", response->type);
-#endif
-            
-            fclose(source);
-            free(line);
-            return response->type;
-        }
-    }
+    char* line;
+    for(int i = 0; i < 2; i++) {
+        send_msg(&request, player.toChild);
+        line = read_line(player.fromChild, 0, 0);
 
-    fclose(source);
-    free(line);
+#ifdef TEST
+        fprintf(stderr, "got line: %s\n", line);
+#endif
+
+        if(line == NULL || check_signal()) {
+#ifdef TEST
+        fprintf(stderr, "interrrupted by signal: %d, line:%s\n",
+                check_signal(), line);
+#endif
+
+            free(line);
+            return ERR;   
+        }
+
+        if((int)decode_player_msg(response, line) != ERR &&
+                valid_move(game, response) == OK) {
+            return response->type;
+        }
+    }
+    
     return ERR;
+}
+
+/*
+ * checks if any players have won the game
+ * params:  numPoints - number of points to win
+ *          pCount - number of players
+ *          players - players in game
+ * returns: UTIL if there are winners
+ *          OK otherwise
+ */
+Error check_win() { //int numPoints, int pCount, Player* players) {
+
+    return OK;
 }
 
 /*
@@ -153,40 +152,36 @@ Comm get_player_move(Game* game, Player player, Msg* response) {
  *          UTIL otherwise for end of game 
  */
 Error start_hub(Game* game, Session* session) {
-    int signal = check_signal();
-    if(signal) {
-        return signal;
-    }
-
     if(send_tokens(game->pCount, session->players, game->tokens[0]) != OK ||
             send_card(game, session, 8) != OK) { // pre-game setup
         return E_DEADPLAYER;
     }
 
+    int signal;
     Error err = OK;
     while((signal = check_signal()), !signal && err == OK) {
         for(int i = 0; i < game->pCount; i++) {
-            Msg response;
-            Comm responseType = get_player_move(game, 
-                    session->players[i], &response);
-            if(responseType == PURCHASE) {
-
-            } else if(responseType == TOOK) {
-
-            } else if(responseType == WILD) {
-
-            } else {
+            Msg response = {-1, 0, 0, 0, 0, 0};
+            if((int)get_player_move(game, session->players[i], 
+                        &response) == ERR) {
+                signal = check_signal();
+                if(errno == EINTR || signal == E_SIGINT) {
+                    err = E_SIGINT;
+                } else if(signal == E_DEADPLAYER) {
+                    err = E_DEADPLAYER;
+                } else {
+                    err = E_PROTOCOL;
+                }
                 free(response.info);
-                return E_PROTOCOL;
+                break;
             }
 
-            if(signal = check_signal(), signal) {
-                free(response.info);
-                return signal;
-            }
-            
+            // TODO exec player request
         }
-        // if end of game reached, err = UTIL;
+        if(!err) {
+            printf("check win\n");
+            err = check_win(game->numPoints, game->pCount, session->players);
+        }
     }
 
     if(!err) {
@@ -218,7 +213,8 @@ int main(int argc, char** argv) {
     }
 
 #ifdef TEST
-    printf("hub initialized, starting players\n");
+    printf("hub initialized, params:tokens=%d, points=%d, starting players\n",
+            game.tokens[0], game.numPoints);
 #endif
     
     int signalList[] = {SIGINT, SIGPIPE, SIGCHLD};
@@ -228,7 +224,7 @@ int main(int argc, char** argv) {
             getpid() != session.parentPID) {
         end_game(&game, &session, E_EXEC);
     } // no child should go past here
-
+    
 #ifdef TEST
     printf("game starting\n");
 #endif

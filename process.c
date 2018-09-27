@@ -12,26 +12,17 @@
 #include "signalHandler.h"
 
 /*
- * close all pipes for a player
- * params:  player - player to close pipes for
- */
-void close_all(Player* player) {
-    close(player->pipeIn[READ]);
-    close(player->pipeIn[WRITE]);
-    close(player->pipeOut[READ]);
-    close(player->pipeOut[WRITE]);
-}
-
-/*
  * reaps player processes
  * params:  game - struct containing relevant game information
  *          err - if an error caused hub to kill players
  */
 void kill_players(int pCount, Player* players, Error err) {
     for(int i = 0; i < pCount; i++) {
+        fclose(players[i].toChild);
+        fclose(players[i].fromChild);
 
 #ifdef TEST
-        printf("[%d]killing: player %c:%d, err:%d\n", 
+        fprintf(stderr, "[%d]killing: player %c:%d, err:%d\n", 
                 getpid(), i + TOCHAR, players[i].pid, err);
 #endif
         
@@ -76,7 +67,10 @@ void pipe_setup(Player* player, char type) {
     } else { // child
         dup2(player->pipeOut[READ], STDIN_FILENO);
         dup2(player->pipeIn[WRITE], STDOUT_FILENO);
-        close_all(player);
+        close(player->pipeIn[READ]);
+        close(player->pipeIn[WRITE]);
+        close(player->pipeOut[READ]);
+        close(player->pipeOut[WRITE]);
     }
 }
 
@@ -97,19 +91,6 @@ Error init_pipe(Player* player) {
         return E_EXEC;
     }
 
-    /*
-    if(pipe(player->controlPipe) < 0) {
-        return E_EXEC;
-    }
-
-    if(fcntl(player->controlPipe[READ], F_SETFD, FD_CLOEXEC) < 0 ||
-            fcntl(player->controlPipe[WRITE], F_SETFD, FD_CLOEXEC) < 0) {
-        close(player->controlPipe[READ]);
-        close(player->controlPipe[WRITE]);
-        return E_EXEC;
-    }
-    */
-
     return OK;
 }
 
@@ -127,13 +108,46 @@ Error make_exec(int pCount, int pID, char** players) {
     char* args[] = {players[pID], totalPlayers, playerNum, NULL};
 
 #ifdef TEST
-    printf("exec:\t%s %s %s\n", args[0], args[1], args[2]);
+    fprintf(stderr, "exec:\t%s %s %s\n", args[0], args[1], args[2]);
 #endif
 
     execvp(args[0], args);
     free(totalPlayers);
     free(playerNum);
     return E_EXEC;
+}
+
+/*
+ * checks if all players started successfully, opens files if so
+ * params:  pCount - number of players to start
+ *          session - struct containing hub only information
+ * returns: E_EXEC if players failed,
+ *          OK otherwise
+ */
+Error check_player_start(int pCount, Session* session) {
+    sleep(1); // wait for failed exec to return
+    for(int i = 0; i < pCount; i++) { // check if exec succeeded
+#ifdef TEST
+        //char buffer[LINE_BUFF] = {0};
+        //fgets(buffer, LINE_BUFF, session->players[i].fromChild);
+        //fgetc(session->players[i].fromChild);
+        //printf("child %c announcing: %s", i + TOCHAR, buffer);
+        char* line = read_line(session->players[i].fromChild, 1, 1);
+        printf("child %c announcing: %s", i + TOCHAR, line);
+        free(line);
+#endif
+        int status = 0;
+        int returnPID = waitpid(session->players[i].pid, &status, WNOHANG);
+        if(returnPID != 0) {
+#ifdef TEST
+            printf("%c exited prematurely, status:%d\n", 
+                    i + TOCHAR, WEXITSTATUS(status));
+#endif
+            return E_EXEC;
+        }
+    }
+
+    return OK;
 }
 
 /*
@@ -160,38 +174,22 @@ Error start_players(int pCount, char** players, Game* game, Session* session) {
         
         if(pid == 0) { // child
             pipe_setup(&session->players[i], 'c');
+#ifdef TEST
+            printf("child %d started\n", getpid());
+#endif
             return make_exec(pCount, i, players); // should not return
         } 
         
         if(pid > 0) { // parent
             session->players[i].pid = pid;
+            session->players[i].toChild = 
+                fdopen(session->players[i].pipeOut[WRITE], "w");
+            session->players[i].fromChild = 
+                fdopen(session->players[i].pipeIn[READ], "r");
             pipe_setup(&session->players[i], 'p');
-
-#ifdef TEST
-            printf("child:\t%c:%d\n", i + TOCHAR, pid);
-#endif
         }
     }
 
-    /*
-    if(check_signal() == SIGCHLD) {
-        return E_EXEC;
-    }
-    */
-
-    sleep(2); // wait for failed exec to return
-    for(int i = 0; i < pCount; i++) { // check if exec succeeded
-        int status = 0;
-        int returnPID = waitpid(session->players[i].pid, &status, WNOHANG);
-        if(returnPID != 0) {
-#ifdef TEST
-            printf("%c exited prematurely, status:%d\n", 
-                    i + TOCHAR, WEXITSTATUS(status));
-#endif
-            return E_EXEC;
-        }
-    }
-
-    return OK;
+    return check_player_start(pCount, session);
 }
 

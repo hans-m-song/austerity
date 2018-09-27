@@ -18,7 +18,7 @@
  */
 int* get_tokens(int* tokens, int* tokenOrder) {
 #ifdef VERBOSE 
-    printf("got token order:%d,%d,%d,%d\n", 
+    fprintf(stderr, "got token order:%d,%d,%d,%d\n", 
             tokenOrder[0], tokenOrder[1], tokenOrder[2], tokenOrder[3]);
 #endif
 
@@ -78,9 +78,10 @@ Error took_tokens(Game* game, Card card, Opponent* opponents, char player) {
     }
 
 #ifdef TEST
-    printf("tokens set: %d,%d,%d,%d; ", game->tokens[0], game->tokens[1],
+    fprintf(stderr, "tokens set: %d,%d,%d,%d; ", 
+            game->tokens[0], game->tokens[1],
             game->tokens[2], game->tokens[3]);
-    printf("player %c set: %d,%d,%d,%d\n", player, 
+    fprintf(stderr, "player %c set: %d,%d,%d,%d\n", player, 
             opponents[(int)(player - TOCHAR)].tokens[0], 
             opponents[(int)(player - TOCHAR)].tokens[1],
             opponents[(int)(player - TOCHAR)].tokens[2], 
@@ -154,7 +155,8 @@ Error set_tokens(Game* game, int numTokens) {
     }
 
 #ifdef TEST
-    printf("tokens set: %d,%d,%d,%d\n", game->tokens[0], game->tokens[1],
+    fprintf(stderr, "tokens set: %d,%d,%d,%d\n", 
+            game->tokens[0], game->tokens[1],
             game->tokens[2], game->tokens[3]);
 #endif
 
@@ -208,7 +210,7 @@ int* get_card_cost(int* discount, int* tokens, Card card) {
         }
 
 #ifdef TEST
-        printf("cost:%d, discount:%d, have:%d, used:%d, wild:%d\n", 
+        fprintf(stderr, "cost:%d, discount:%d, have:%d, used:%d, wild:%d\n", 
                 card[i + 2] - discount[i], 
                 discount[i],
                 tokens[i],
@@ -234,7 +236,8 @@ int sum_tokens(Card card, int* discount) {
 
 #ifdef TEST
             if(discount[i]) {
-                printf("discount[%d] of %d applied\n", i, discount[i]);
+                fprintf(stderr, "discount[%d] of %d applied\n", 
+                        i, discount[i]);
             }
 #endif
         }

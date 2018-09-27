@@ -51,8 +51,6 @@ char* encode_hub(Msg* msg) {
             free(output);
             return NULL;
     }
-    //char newline[] = "\n";
-    //strcat(output, newline);
 
     return output;
 }
@@ -92,8 +90,6 @@ char* encode_player(Msg* msg) {
         default:
             break;
     }
-    //char newline[] = "\n";
-    //strcat(output, newline);
 
     return output;
 }
@@ -142,7 +138,7 @@ Comm decode_hub_msg(Msg* msg, char* input) {
             save_info(msg->info, (char)0, 0, purple, brown, yellow, red);
         } else {
 #ifdef TEST
-            printf("invalid message: %s\n", input);
+            fprintf(stderr, "invalid message: %s\n", input);
 #endif
             free(input);
             return ERR;
@@ -150,7 +146,7 @@ Comm decode_hub_msg(Msg* msg, char* input) {
     }
     
 #ifdef VERBOSE 
-    printf("decode:[%d] hub=%s\n", msg->type, input);
+    fprintf(stderr, "decode:[%d] hub=%s\n", msg->type, input);
 #endif
 
     free(input);
@@ -169,7 +165,7 @@ Comm decode_player_msg(Msg* msg, char* input) {
     char end;
 
 #ifdef TEST
-    printf("decode:\tplayer=%s\n", input);
+    fprintf(stderr, "decode:\tplayer=%s\n", input);
 #endif
 
     if(strcmp(input, "wild") == OK) {
@@ -186,7 +182,7 @@ Comm decode_player_msg(Msg* msg, char* input) {
         save_info(msg->info, (char)0, 0, purple, brown, yellow, red);
     } else {
 #ifdef TEST
-        printf("invalid message: %s\n", input);
+        fprintf(stderr, "invalid message: %s\n", input);
 #endif
         free(input);
         return ERR;

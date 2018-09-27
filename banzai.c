@@ -17,7 +17,7 @@
  */
 Msg* banzai_move(Game* game) {
 #ifdef TEST
-    printf("banzai[%d] move, tokens:%d,%d,%d,%d,%d\n", game->pID,
+    fprintf(stderr, "banzai[%d] move, tokens:%d,%d,%d,%d,%d\n", game->pID,
             game->ownedTokens[0], game->ownedTokens[1], 
             game->ownedTokens[2], game->ownedTokens[3],
             game->wild);
@@ -69,7 +69,7 @@ int main(int argc, char** argv) {
     }
 
 #ifdef TEST
-    printf("banzai exiting\n");
+    fprintf(stderr, "banzai exiting\n");
 #endif
 
     perr_msg(err, BANZAI); 

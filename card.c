@@ -12,17 +12,9 @@
  *          position - place in stack
  */
 void print_card(Card card, int position) {
-#ifdef TEST 
-    printf("print:\tcard[%d] %c:%d:%d,%d,%d,%d\n", 
-            position, (char)card[COLOR], card[POINTS], 
-            card[PURPLE], card[BROWN], card[YELLOW], card[RED]);
-#endif
-
-#ifndef TEST
     fprintf(stderr, "Card %d:%c/%d/%d,%d,%d,%d\n", 
             position, (char)card[COLOR], card[POINTS], 
             card[PURPLE], card[BROWN], card[YELLOW], card[RED]);
-#endif
 }
 
 /*
@@ -42,9 +34,9 @@ void print_deck(Deck deck, int numCards) {
  */
 void announce_card(Card card) {
     fprintf(stdout, "New card = Bonus %c, worth %d, costs %d,%d,%d,%d\n",
-        (char)card[COLOR], card[POINTS],
-        card[PURPLE], card[BROWN],
-        card[YELLOW], card[RED]);
+            (char)card[COLOR], card[POINTS],
+            card[PURPLE], card[BROWN],
+            card[YELLOW], card[RED]);
 }
 
 /*
@@ -97,8 +89,8 @@ Error add_card(Stack* stack, char color, int points,
     }
 
 #ifdef VERBOSE
-    printf("alloc:\tcard[%d]\n", stack->numCards);
-    printf("saving:\tcard[%d] %c:%d:%d,%d,%d,%d\n", stack->numCards,
+    fprintf(stderr, "alloc:\tcard[%d]\n", stack->numCards);
+    fprintf(stderr, "saving:\tcard[%d] %c:%d:%d,%d,%d,%d\n", stack->numCards,
             color, points, purple, brown, yellow, red);
 #endif
     
@@ -114,7 +106,7 @@ Error add_card(Stack* stack, char color, int points,
     stack->deck[stack->numCards][RED] = red;
 
 #ifdef VERBOSE 
-    printf("saved:\tcard[%d] %c:%d:%d,%d,%d,%d\n", stack->numCards,
+    fprintf(stderr, "saved:\tcard[%d] %c:%d:%d,%d,%d,%d\n", stack->numCards,
             (char)stack->deck[stack->numCards][COLOR], 
             stack->deck[stack->numCards][POINTS],
             stack->deck[stack->numCards][PURPLE], 
@@ -136,7 +128,7 @@ Error add_card(Stack* stack, char color, int points,
  */
 Error remove_card(Stack* stack, int card) {
 #ifdef VERBOSE 
-    printf("remove:\tcard[%d]\n", card);
+    fprintf(stderr, "remove:\tcard[%d]\n", card);
 #endif
 
     if (card > stack->numCards - 1) {
@@ -147,7 +139,7 @@ Error remove_card(Stack* stack, int card) {
         for(int i = card; i < stack->numCards - 1; i++) {
             for(int j = 0; j < CARD_SIZE; j++) {
 #ifdef VERBOSE 
-                printf("%d:%d, %d <- %d\n", i, j, 
+                fprintf(stderr, "%d:%d, %d <- %d\n", i, j, 
                         stack->deck[i][j], stack->deck[i + 1][j]);
 #endif
                 stack->deck[i][j] = stack->deck[i + 1][j];
@@ -166,7 +158,7 @@ Error remove_card(Stack* stack, int card) {
  */
 void shred_deck(Deck deck, int numCards) {
 #ifdef VERBOSE
-    printf("shredding deck of %d cards\n", numCards);
+    fprintf(stderr, "shredding deck of %d cards\n", numCards);
 #endif
     
     for(int i = 0; i < numCards; i++) {
@@ -246,7 +238,7 @@ Error read_deck(FILE* deckFile, Stack* stack) {
         }
         
 #ifdef VERBOSE 
-        printf("fgets:\t%s", line);
+        fprintf(stderr, "fgets:\t%s", line);
 #endif
 
         if(add_card(stack, color, points, 
@@ -257,7 +249,7 @@ Error read_deck(FILE* deckFile, Stack* stack) {
     free(line);
 
 #ifdef TEST
-    printf("got:\t%d cards\n", stack->numCards);
+    fprintf(stderr, "got:\t%d cards\n", stack->numCards);
 #endif
     
     if(stack->numCards != 0 && err != OK) {

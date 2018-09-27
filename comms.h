@@ -27,8 +27,6 @@ typedef struct {
     int card;
 } Msg;
 
-Error send_msg(Msg* msg, int destination);
-
 char* encode_hub(Msg* msg);
 
 char* encode_player(Msg* msg);

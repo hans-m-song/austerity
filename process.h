@@ -9,6 +9,8 @@ typedef struct {
     pid_t pid;
     int pipeIn[2];
     int pipeOut[2];
+    FILE* toChild;
+    FILE* fromChild;
 } Player;
 
 typedef struct {

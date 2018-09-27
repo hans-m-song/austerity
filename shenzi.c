@@ -97,11 +97,11 @@ int choose_card(Game* game) {
 
 #ifdef TEST
     for(int i = 0; i < validCardNum && validCardNum; i++) {
-        printf("cost:%d, ", sum_tokens(game->stack.deck[validCards[i]],
-                game->discount));
+        fprintf(stderr, "cost:%d, ", 
+                sum_tokens(game->stack.deck[validCards[i]], game->discount));
         print_card(game->stack.deck[validCards[i]], validCards[i]);
     }
-    printf("can afford %d cards, had %d duplicates, chose %d\n", 
+    fprintf(stderr, "can afford %d cards, had %d duplicates, chose %d\n", 
             validCardNum, duplicates, chosenCard);
 #endif
     
@@ -117,7 +117,8 @@ int choose_card(Game* game) {
  */
 Msg* shenzi_move(Game* game) {
 #ifdef TEST
-    printf("shenzi[%d] move, tokens:%d,%d,%d,%d,%d, discount:%d,%d,%d,%d\n", 
+    fprintf(stderr, 
+            "shenzi[%d] move, tokens:%d,%d,%d,%d,%d, discount:%d,%d,%d,%d\n", 
             game->pID,
             game->ownedTokens[0], game->ownedTokens[1], 
             game->ownedTokens[2], game->ownedTokens[3],
@@ -147,7 +148,7 @@ Msg* shenzi_move(Game* game) {
             memcpy(msg->info + 2, tokens, sizeof(int) * TOKEN_SIZE);
 
 #ifdef TEST
-            printf("taking:\t%d,%d,%d,%d\n", 
+            fprintf(stderr, "taking:\t%d,%d,%d,%d\n", 
                     tokens[0], tokens[1], tokens[2], tokens[3]);
 #endif
 
@@ -200,7 +201,7 @@ int main(int argc, char** argv) {
     }
 
 #ifdef TEST
-    printf("shenzi exiting\n");
+    fprintf(stderr, "shenzi exiting\n");
 #endif
 
     perr_msg(err, SHENZI); 

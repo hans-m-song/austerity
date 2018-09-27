@@ -17,32 +17,42 @@ char* to_string(int input) {
 }
 
 /*
- * reads characters from a filestream until EOF or newline is encountered
+ * reads characters from a filestream until EOF, space, or newline
  * params:  input - filestream to read from
+ *          space - 1: allow, 0: deny
+ *          newline - 1: allow, 0: replace
  * returns: string ending with a newline 
  *          (replacing newline with a null terminator),
  *          null if error encountered
  */
-char* read_line(FILE* input) {
+char* read_line(FILE* input, int space, int newline) {
     int size = LINE_BUFF;
     char* result = (char*)malloc(sizeof(char) * size);
-    int pos = 0;
+    int position = 0;
     int i = 0;
     while(1) {
         i = fgetc(input);
-        if(i == EOF || i == ' ') {
+        if(i == EOF || (!space && i == ' ')) {
             free(result);
             return NULL;
         }
         
-        if(i == '\n') {
-            result[pos] = '\0';
+        if(!newline && i == '\n') {
+            result[position] = '\0';
+            return result;
+        } else if(newline && i == '\n') {
+            result[position] = (char)i;
+            if(position > size - 1) {
+                size *= 2;
+                result = (char*)realloc(result, sizeof(char) * size);
+            }
+            result[position + 1] = '\0';
             return result;
         }
-        
-        result[pos++] = (char)i;
+       
+        result[position++] = (char)i;
 
-        if(pos > size - 1) {
+        if(position > size - 1) {
             size *= 2;
             result = (char*)realloc(result, sizeof(char) * size);
         }

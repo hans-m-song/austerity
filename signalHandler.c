@@ -17,10 +17,12 @@ volatile sig_atomic_t globalSignal = 0;
  */
 void signal_handler(int signal) {
 #ifdef TEST
-    fprintf(stdout, "[%d]signal %d caught\n", getpid(), signal);
+    fprintf(stderr, "[%d]signal %d caught\n", getpid(), signal);
 #endif
-
-    globalSignal = signal;
+    
+    if(globalSignal != SIGINT) {
+        globalSignal = signal;
+    }
 }
 
 /*
@@ -57,7 +59,7 @@ void init_signal_handler(int signalList[], int len) {
     // only catch relevant signals
     for(int i = 0; i < len; i++) {
 #ifdef TEST
-        printf("register signal %d\n", signalList[i]);
+        fprintf(stderr, "register signal %d\n", signalList[i]);
 #endif
         
         struct sigaction sigact;

@@ -30,7 +30,7 @@ typedef struct {
 
 char* to_string(int input);
 
-char* read_line(FILE* input);
+char* read_line(FILE* input, int space, int newline);
 
 void concat(char* input1, char* input2);
 
