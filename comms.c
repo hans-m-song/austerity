@@ -51,8 +51,8 @@ char* encode_hub(Msg* msg) {
             free(output);
             return NULL;
     }
-    char newline[] = "\n";
-    strcat(output, newline);
+    //char newline[] = "\n";
+    //strcat(output, newline);
 
     return output;
 }
@@ -92,8 +92,8 @@ char* encode_player(Msg* msg) {
         default:
             break;
     }
-    char newline[] = "\n";
-    strcat(output, newline);
+    //char newline[] = "\n";
+    //strcat(output, newline);
 
     return output;
 }

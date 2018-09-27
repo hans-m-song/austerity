@@ -37,6 +37,17 @@ void print_deck(Deck deck, int numCards) {
 }
 
 /*
+ * announces card to stdout
+ * params:  card - card to print
+ */
+void announce_card(Card card) {
+    fprintf(stdout, "New card = Bonus %c, worth %d, costs %d,%d,%d,%d\n",
+        (char)card[COLOR], card[POINTS],
+        card[PURPLE], card[BROWN],
+        card[YELLOW], card[RED]);
+}
+
+/*
  * a wrapper for add_card and remove_card, 
  * moves card from stack1 to stack2
  * params:  stack - struct containing deck and number of cards
@@ -124,7 +135,7 @@ Error add_card(Stack* stack, char color, int points,
  *          OK otherwise
  */
 Error remove_card(Stack* stack, int card) {
-#ifdef TEST
+#ifdef VERBOSE 
     printf("remove:\tcard[%d]\n", card);
 #endif
 

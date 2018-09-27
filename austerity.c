@@ -18,6 +18,10 @@
  *          err - code to exit with
  */
 void end_game(Game* game, Session* session, Error err) {
+#ifdef TEST
+    printf("err:%d\n", err);
+#endif
+
     shred_deck(game->stack.deck, game->stack.numCards);
     shred_deck(game->hubStack.deck, game->hubStack.numCards);
 
@@ -55,29 +59,22 @@ Error send_tokens(int pCount, Player* players, int tokens) {
  * moves card from hubstack to stack to keep track of cards in game
  * params:  game - struct containing relevant game information
  *          session - struct containing hub only information
- *          card - send topmost card or if -1, send 8 cards, 
- *          if saved is less than 8, send all
+ *          cards - number of cards to send
  * returns: E_DEADPLAYER if client disconnects,
  *          UTIL if utility operations fail
  *          OK otherwise
  */
-Error send_card(Game* game, Session* session, int card) {
+Error send_card(Game* game, Session* session, int cards) {
     Error err = OK;
     Msg msg = {NEWCARD, 0, 0, 0, 0, 0};
     msg.info = (Card)malloc(sizeof(int) * CARD_SIZE);
-    if(card > -1) {
-        memcpy(msg.info, game->stack.deck[0], sizeof(int) * CARD_SIZE);
+    for(int i = 0; i < cards; i++) {
+        announce_card(game->hubStack.deck[0]);
+        memcpy(msg.info, game->hubStack.deck[0], sizeof(int) * CARD_SIZE);
         if(broadcast(game->pCount, session->players, &msg) != OK ||
                 move_card(&game->hubStack, &game->stack, 0) != OK) {
+            free(msg.info);
             return UTIL;
-        }
-    } else {
-        for(int i = 0; i < game->stack.numCards && i < 8; i++) {
-            memcpy(msg.info, game->stack.deck[i], sizeof(int) * CARD_SIZE);
-            if(broadcast(game->pCount, session->players, &msg) != OK ||
-                    move_card(&game->hubStack, &game->stack, 0) != OK) {
-                return UTIL;
-            }
         }
     }
     
@@ -112,15 +109,18 @@ Comm get_player_move(Game* game, Player player, Msg* response) {
     FILE* source = fdopen(player.pipeIn[READ], "r");
     char* line = read_line(source);
     if(line == NULL) {
+        fclose(source);
         return ERR;
     }
         
     if((int)decode_player_msg(response, line) != ERR) {
         if(valid_move(game, response) == OK) {
 #ifdef TEST
-            printf("got response: %d\n", response.type);
+            printf("got response: %d\n", response->type);
 #endif
-
+            
+            fclose(source);
+            free(line);
             return response->type;
         }
     }
@@ -129,13 +129,17 @@ Comm get_player_move(Game* game, Player player, Msg* response) {
     if((int)decode_player_msg(response, line) != ERR) {
         if(valid_move(game, response) == OK) {
 #ifdef TEST
-            printf("got response after reprompt: %d\n", response.type);
+            printf("got response after reprompt: %d\n", response->type);
 #endif
-
+            
+            fclose(source);
+            free(line);
             return response->type;
         }
     }
 
+    fclose(source);
+    free(line);
     return ERR;
 }
 
@@ -154,8 +158,8 @@ Error start_hub(Game* game, Session* session) {
         return signal;
     }
 
-    if(send_tokens(game->pCount, session->players, game->tokens[0]) ||
-            send_card(game, session, -1)) { // pre-game setup
+    if(send_tokens(game->pCount, session->players, game->tokens[0]) != OK ||
+            send_card(game, session, 8) != OK) { // pre-game setup
         return E_DEADPLAYER;
     }
 
@@ -172,10 +176,12 @@ Error start_hub(Game* game, Session* session) {
             } else if(responseType == WILD) {
 
             } else {
+                free(response.info);
                 return E_PROTOCOL;
             }
 
             if(signal = check_signal(), signal) {
+                free(response.info);
                 return signal;
             }
             
@@ -196,7 +202,7 @@ int main(int argc, char** argv) {
     session.parentPID = getpid();
 
 #ifdef TEST
-    printf("pPID:\t%d\n", getpid());
+    printf("parent PID:\t%d\n", getpid());
 #endif
     
     if(argc < 6 || argc - 4 > MAX_PLAYERS) {
@@ -210,6 +216,10 @@ int main(int argc, char** argv) {
         herr_msg(err);
         return err;
     }
+
+#ifdef TEST
+    printf("hub initialized, starting players\n");
+#endif
     
     int signalList[] = {SIGINT, SIGPIPE, SIGCHLD};
     init_signal_handler(signalList, 3);
@@ -218,6 +228,10 @@ int main(int argc, char** argv) {
             getpid() != session.parentPID) {
         end_game(&game, &session, E_EXEC);
     } // no child should go past here
+
+#ifdef TEST
+    printf("game starting\n");
+#endif
 
     err = start_hub(&game, &session);
     end_game(&game, &session, err);

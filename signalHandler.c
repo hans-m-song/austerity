@@ -7,7 +7,7 @@
 #include "signalHandler.h"
 
 /*
- * global variables used to tell if a signal has been caught
+ * global variable used to tell if a signal has been caught
  */
 volatile sig_atomic_t globalSignal = 0;
 
@@ -21,6 +21,13 @@ void signal_handler(int signal) {
 #endif
 
     globalSignal = signal;
+}
+
+/*
+ * resets the global signal flag
+ */
+void reset_signal(void) {
+    globalSignal = 0;
 }
 
 /*

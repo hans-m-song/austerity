@@ -98,23 +98,17 @@ Error init_pipe(Player* player) {
     }
 
     /*
-    if(fcntl(player.pipeIn[READ], F_SETFD, FD_CLOEXEC) < 0 ||
-            fcntl(player.pipeOut[WRITE], F_SETFD, FD_CLOEXEC) < 0) {
-        close_all(player);
-        return E_EXEC;
-    }
-    */
-
     if(pipe(player->controlPipe) < 0) {
         return E_EXEC;
     }
 
-    if(fcntl(player->controlPipe[READ], F_SETFD, FD_CLOEXEC) > 0 ||
-            fcntl(player->controlPipe[WRITE], F_SETFD, FD_CLOEXEC) > 0) {
+    if(fcntl(player->controlPipe[READ], F_SETFD, FD_CLOEXEC) < 0 ||
+            fcntl(player->controlPipe[WRITE], F_SETFD, FD_CLOEXEC) < 0) {
         close(player->controlPipe[READ]);
         close(player->controlPipe[WRITE]);
         return E_EXEC;
     }
+    */
 
     return OK;
 }
@@ -179,10 +173,21 @@ Error start_players(int pCount, char** players, Game* game, Session* session) {
         }
     }
 
-    for(int i = 0; i < pCount; i++) {
-        int signal = check_signal();
-        if(signal || 
-                write(session->players[i].controlPipe[WRITE], ".", 1) > 0) {
+    /*
+    if(check_signal() == SIGCHLD) {
+        return E_EXEC;
+    }
+    */
+
+    sleep(2); // wait for failed exec to return
+    for(int i = 0; i < pCount; i++) { // check if exec succeeded
+        int status = 0;
+        int returnPID = waitpid(session->players[i].pid, &status, WNOHANG);
+        if(returnPID != 0) {
+#ifdef TEST
+            printf("%c exited prematurely, status:%d\n", 
+                    i + TOCHAR, WEXITSTATUS(status));
+#endif
             return E_EXEC;
         }
     }

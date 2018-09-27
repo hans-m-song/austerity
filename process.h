@@ -9,7 +9,6 @@ typedef struct {
     pid_t pid;
     int pipeIn[2];
     int pipeOut[2];
-    int controlPipe[2];
 } Player;
 
 typedef struct {
