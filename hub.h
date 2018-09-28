@@ -7,9 +7,6 @@
 #include "comms.h"
 #include "process.h"
 
-#define TO_CHILD pipeOut[WRITE]
-#define FROM_CHILD pipeIn[READ]
-
 Error hub_init(char** argv, Game* game);
 
 Error broadcast(int pCount, Player* players, Msg* msg);

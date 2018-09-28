@@ -41,6 +41,30 @@ int check_pid(char* input, int pCount) {
 }
 
 /*
+ * sorts deck by points, highest and newest first
+ * params:  numCards - number of cards in deck
+ *          deck - array of cards to sort
+ * returns: array of indicies of the cards in sorted order
+ */
+int* sort_by_points(int numCards, Deck deck) {
+    int* sortedCards = (int*)malloc(numCards * sizeof(int));
+    memset(sortedCards, -1, sizeof(int) * numCards);
+    for(int i = 0; i < numCards; i++) {
+        int max = 0; 
+        for(int j = 0; j < numCards; j++) {
+            if(!has_element(sortedCards, numCards, j)) {
+                if(max < deck[j][POINTS]) {
+                    max = deck[j][POINTS];
+                    sortedCards[i] = j;
+                }
+            }
+        }
+    }
+
+    return sortedCards;
+}
+
+/*
  * initializes game for players
  * params:  pID - id of player from 0 to pCount
  *          pCount - number of players in game
@@ -235,13 +259,13 @@ void print_status(Game* game, Opponent* opponents, int msgType, Error err) {
 }
 
 /*
- * main driver for logic of players
+ * main driver for logic of shenzi, banzai, and ed
  * params:  game - struct containing game relevant information
  *          move - function pointer to the player-specific move logic
  * returns: E_COMMERR if bad message received,
  *          UTIL otherwise for end of game
  */
-Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
+Error play_game(Game* game, Msg* (*playerMove)(Game*, ...)) {
     Error err = OK;
     char* line;
     Msg msg;
@@ -260,7 +284,7 @@ Error play_game(Game* game, Msg* (*playerMove)(Game*)) {
                 err = print_winners(game->pCount, opponents);
                 break;
             case DOWHAT:
-                err = send_move(game, playerMove(game));
+                err = send_move(game, playerMove(game, opponents));
                 break;
             case TOKENS:
                 err = set_tokens(game, msg.tokens);

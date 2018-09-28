@@ -5,6 +5,7 @@
 #include "err.h"
 #include "common.h"
 
+// information used by hub for communication to players
 typedef struct {
     pid_t pid;
     int pipeIn[2];
@@ -13,6 +14,8 @@ typedef struct {
     FILE* fromChild;
 } Player;
 
+// hub only information, contains player communication,
+// player stats and the parentPID for identification
 typedef struct {
     int id;
     pid_t parentPID;

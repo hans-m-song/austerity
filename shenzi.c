@@ -36,30 +36,6 @@ int* remove_invalid(Stack* stack, int* sortedCards, int* validCardNum,
 }
 
 /*
- * sorts deck by points, highest and newest first
- * params:  numCards - number of cards in deck
- *          deck - array of cards to sort
- * returns: array of indicies of the cards in sorted order
- */
-int* sort_by_points(int numCards, Deck deck) {
-    int* sortedCards = (int*)malloc(numCards * sizeof(int));
-    memset(sortedCards, -1, sizeof(int) * numCards);
-    for(int i = 0; i < numCards; i++) {
-        int max = 0; 
-        for(int j = 0; j < numCards; j++) {
-            if(!has_element(sortedCards, numCards, j)) {
-                if(max < deck[j][POINTS]) {
-                    max = deck[j][POINTS];
-                    sortedCards[i] = j;
-                }
-            }
-        }
-    }
-
-    return sortedCards;
-}
-
-/*
  * checks if cards can be purchased and chooses one if so
  * params:  game - struct containing game relevant information
  * returns: -1 if no cards are valid,
@@ -69,8 +45,8 @@ int choose_card(Game* game) {
     int* sortedCards = sort_by_points(game->stack.numCards, game->stack.deck);
     int validCardNum = 0;
     int duplicates = 0;
-    int* validCards = remove_invalid(&game->stack, sortedCards, 
-            &validCardNum, game->discount, game->ownedTokens, game->wild);
+    int* validCards = remove_invalid(&game->stack, sortedCards, &validCardNum,
+            game->discount, game->ownedTokens, game->wild);
     int chosenCard = -1;
     if(validCardNum == 1) {
         chosenCard = validCards[0];
@@ -115,7 +91,7 @@ int choose_card(Game* game) {
  * params:  game - struct containing game relevant information
  * returns: msg containing move for this player
  */
-Msg* shenzi_move(Game* game) {
+Msg* shenzi_move(Game* game, ...) {
 #ifdef TEST
     fprintf(stderr, 
             "shenzi[%d] move, tokens:%d,%d,%d,%d,%d, discount:%d,%d,%d,%d, "

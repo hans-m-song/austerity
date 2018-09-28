@@ -349,7 +349,7 @@ Error start_hub(Game* game, Session* session) {
         for(int i = 0; i < game->pCount; i++) {
             Msg response = {-1, 0, 0, 0, 0, 0};
             if((int)get_player_move(game, session->players[i], // get move
-                        session->playerStats[i], &response) == ERR) {
+                    session->playerStats[i], &response) == ERR) {
                 signal = check_signal();
                 if(errno == EINTR || signal == E_SIGINT) {
                     err = E_SIGINT;

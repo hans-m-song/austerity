@@ -4,12 +4,18 @@
 #include <stdio.h>
 #include "card.h"
 
+// pipe size
 #define FD_SIZE 2
+// pipe stream directions
 #define READ 0
 #define WRITE 1
+// maximum buffer size
 #define LINE_BUFF 50
+// number of types of tokens
 #define TOKEN_SIZE 4
+// maximum number of players
 #define MAX_PLAYERS 26
+// converting int to char (e.g. 0 -> 'A')
 #define TOCHAR 65
 
 // struct containing information relevant to the game

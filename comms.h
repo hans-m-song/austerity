@@ -4,6 +4,7 @@
 #include "err.h"
 #include "card.h"
 
+// message types sent between player and hub
 typedef enum {
     EOG,
     DOWHAT,
@@ -16,8 +17,9 @@ typedef enum {
     WILD
 } Comm;
 
-// message between hub and player, 
-// message will be encoded/decoded depending on type
+// deconstructed message between hub and player, 
+// message will be encoded/decoded depending on type,
+// not all fields will be used depending on type
 typedef struct {
     Comm type;
     char player;

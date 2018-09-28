@@ -18,6 +18,7 @@
 typedef int* Card;
 typedef Card* Deck;
 
+// struct to hold deck relevant information
 typedef struct {
     int numCards;
     Deck deck;

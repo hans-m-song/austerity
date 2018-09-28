@@ -81,7 +81,7 @@ int choose_card(Game* game) {
         int max = sum_tokens(game->stack.deck[validCards[0]], game->discount);
         for(int i = 0; i < validCardNum; i++) {
             if(sum_tokens(game->stack.deck[validCards[i]], 
-                        game->discount) == max) {
+                    game->discount) == max) {
                 duplicates++;
             }
         }
@@ -111,7 +111,7 @@ int choose_card(Game* game) {
  * params:  game - struct containing game relevant information
  * returns: msg containing move for this player
  */
-Msg* banzai_move(Game* game) {
+Msg* banzai_move(Game* game, ...) {
 #ifdef TEST
     fprintf(stderr, 
             "banzai[%d] move, tokens:%d,%d,%d,%d,%d, discount:%d,%d,%d,%d, "
@@ -128,7 +128,7 @@ Msg* banzai_move(Game* game) {
 
     Msg* msg = (Msg*)malloc(sizeof(Msg));
     int ownedTokenSum = game->ownedTokens[0] + game->ownedTokens[1] + 
-        game->ownedTokens[2] + game->ownedTokens[3] + game->wild;
+            game->ownedTokens[2] + game->ownedTokens[3] + game->wild;
     int tokenOrder[] = {YELLOW - 2, BROWN - 2, PURPLE - 2, RED - 2};
     int* tokens = get_tokens(game->tokens, tokenOrder);
     if(tokens && ownedTokenSum < 3) { // take tokens
@@ -137,10 +137,10 @@ Msg* banzai_move(Game* game) {
         memcpy(msg->info + 2, tokens, sizeof(int) * TOKEN_SIZE);
 
 #ifdef TEST
-            fprintf(stderr, "taking:\t%d,%d,%d,%d\n", 
-                    tokens[0], tokens[1], tokens[2], tokens[3]);
+        fprintf(stderr, "taking:\t%d,%d,%d,%d\n", 
+                tokens[0], tokens[1], tokens[2], tokens[3]);
 #endif
-            free(tokens);
+        free(tokens);
     } else { // take card
         int chosenCard = choose_card(game);
         if(chosenCard > -1) {
@@ -173,7 +173,7 @@ int main(int argc, char** argv) {
     }
 
     int pID = check_pid(argv[2], pCount);
-   if(pID == ERR) {
+    if(pID == ERR) {
         perr_msg(E_PID, BANZAI);
         return E_PID;
     }
