@@ -55,8 +55,8 @@ Error send_tokens(int pCount, Player* players, int tokens) {
 }
 
 /*
- * creates the message to send a card to players, 
- * moves card from hubstack to stack to keep track of cards in game
+ * creates the message to send 1 or many cards to players, 
+ * moves card from hubstack to stack to keep track of active cards in game
  * params:  game - struct containing relevant game information
  *          session - struct containing hub only information
  *          cards - number of cards to send
@@ -103,7 +103,7 @@ Error check_win(int winningPoints, int pCount, Game* playerStats) {
         }
     }
 
-    if(winners > 0) {
+    if(winners > 0) { // if winners found
         fprintf(stdout, "Winner(s) ");
         for(int i = 0; i < winners; i++) {
             fprintf(stdout, "%c", winList[i]);
