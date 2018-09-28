@@ -192,11 +192,18 @@ Msg* ed_move(Game* game, ...) {
     } else { // no cards are affordable outright by this player
         int tokenOrder[] = {YELLOW - 2, RED - 2, BROWN - 2, PURPLE - 2};
         int* debt = choose_alternate_card(game, opponents, tokenOrder);
+        int* tokens = get_tokens(game->tokens, tokenOrder);
         if(debt) {
             msg->type = TAKE;
             msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
             memcpy(msg->info + 2, debt, sizeof(int) * TOKEN_SIZE);
             free(debt);
+            free(tokens);
+        } else if(tokens) {
+            msg->type = TAKE;
+            msg->info = (Card)malloc(sizeof(int) * CARD_SIZE);
+            memcpy(msg->info + 2, tokens, sizeof(int) * TOKEN_SIZE);
+            free(tokens);
         } else {
             msg->type = WILD;
         }
