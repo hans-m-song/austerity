@@ -39,8 +39,6 @@ void kill_players(int pCount, Player* players, Error err) {
         sleep(2);
         if(!waitpid(players[i].pid, &status, WNOHANG)) {
             kill(players[i].pid, SIGKILL);
-            fprintf(stderr, "Player %c shutdown after receiving signal %d\n", 
-                    i + TOCHAR, SIGKILL);
             continue;
         }
 

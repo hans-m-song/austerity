@@ -11,6 +11,31 @@
 #include "signalHandler.h"
 
 /*
+ * removes cards player cannot afford
+ * params:  stack - struct containing deck and number of cards
+ *          sortedCards - cards sorted by point value
+ *          validCardNum - pointer to store affordable cards number into
+ *          ownedTokens - players owned tokens
+ *          wild - players owned wild tokens
+ * returns: an array of cards of validCardNum length the player can afford 
+ */
+int* remove_invalid(Stack* stack, int* sortedCards, int* validCardNum, 
+        int* discount, int* ownedTokens, int wild) {
+    validCardNum[0] = 0;
+    int* validCards = (int*)malloc(sizeof(int) * stack->numCards);
+    memset(validCards, -1, sizeof(int) * stack->numCards);
+    for(int i = 0; i < stack->numCards; i++) {
+        if(can_afford(stack->deck[sortedCards[i]], discount, 
+                ownedTokens, wild) > -1) {
+            validCards[validCardNum[0]] = sortedCards[i];
+            validCardNum[0]++;
+        }
+    }
+    
+    return validCards;
+}
+
+/*
  * sorts deck by points, highest and newest first
  * params:  numCards - number of cards in deck
  *          deck - array of cards to sort
@@ -35,31 +60,6 @@ int* sort_by_points(int numCards, Deck deck) {
 }
 
 /*
- * removes cards player cannot afford
- * params:  stack - struct containing deck and number of cards
- *          sortedCards - cards sorted by point value
- *          validCardNum - pointer to store affordable cards number into
- *          ownedTokens - players owned tokens
- *          wild - players owned wild tokens
- * returns: an array of cards of validCardNum length the player can afford 
- */
-int* remove_unaffordable(Stack* stack, int* sortedCards, int* validCardNum, 
-        int* discount, int* ownedTokens, int wild) {
-    validCardNum[0] = 0;
-    int* validCards = (int*)malloc(sizeof(int) * stack->numCards);
-    memset(validCards, -1, sizeof(int) * stack->numCards);
-    for(int i = 0; i < stack->numCards; i++) {
-        if(can_afford(stack->deck[sortedCards[i]], discount, 
-                ownedTokens, wild) > -1) {
-            validCards[validCardNum[0]] = sortedCards[i];
-            validCardNum[0]++;
-        }
-    }
-    
-    return validCards;
-}
-
-/*
  * checks if cards can be purchased and chooses one if so
  * params:  game - struct containing game relevant information
  * returns: -1 if no cards are valid,
@@ -69,7 +69,7 @@ int choose_card(Game* game) {
     int* sortedCards = sort_by_points(game->stack.numCards, game->stack.deck);
     int validCardNum = 0;
     int duplicates = 0;
-    int* validCards = remove_unaffordable(&game->stack, sortedCards, 
+    int* validCards = remove_invalid(&game->stack, sortedCards, 
             &validCardNum, game->discount, game->ownedTokens, game->wild);
     int chosenCard = -1;
     if(validCardNum == 1) {
