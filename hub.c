@@ -33,6 +33,7 @@ Error hub_init(char** argv, Game* game) {
     }
     for(int i = 0; i < TOKEN_SIZE; i++) {
         game->tokens[i] = (int)numTokens;
+        game->discount[i] = 0;
     }
     game->numPoints = (int)numPoints;
 

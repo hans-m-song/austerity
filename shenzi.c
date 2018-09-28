@@ -118,13 +118,16 @@ int choose_card(Game* game) {
 Msg* shenzi_move(Game* game) {
 #ifdef TEST
     fprintf(stderr, 
-            "shenzi[%d] move, tokens:%d,%d,%d,%d,%d, discount:%d,%d,%d,%d\n", 
+            "shenzi[%d] move, tokens:%d,%d,%d,%d,%d, discount:%d,%d,%d,%d, "
+            "bank:%d,%d,%d,%d\n", 
             game->pID,
             game->ownedTokens[0], game->ownedTokens[1], 
             game->ownedTokens[2], game->ownedTokens[3],
             game->wild,
             game->discount[0], game->discount[1],
-            game->discount[2], game->discount[3]);
+            game->discount[2], game->discount[3],
+            game->tokens[0], game->tokens[1], 
+            game->tokens[2], game->tokens[3]);
 #endif
 
     Msg* msg = (Msg*)malloc(sizeof(Msg));

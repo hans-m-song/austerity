@@ -71,6 +71,17 @@ void concat(char* input1, char* input2) {
 }
 
 /*
+ * concatenates the given char to the string
+ * params:  input1 - string to concatenate to
+ *          position - position to concatenate at
+ *          input2 - char to concatenate with
+ */
+void charcat(char* input1, int position, char input2) {
+    input1[position] = input2;
+    input1[position + 1] = '\0';
+}
+
+/*
  * checks if an element is in an array
  * params:  array - array to search
  *          len - length of array

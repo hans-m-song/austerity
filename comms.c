@@ -8,6 +8,20 @@
 #include "signalHandler.h"
 
 /*
+ * adds token information to string
+ * params:  output - string to concatenate to
+ *          card - struct containing information to convert
+ */
+void add_token_info(char* output, Card card) {
+    for(int i = PURPLE; i < CARD_SIZE; i++) {
+        concat(output, to_string(card[i]));
+        if(i < CARD_SIZE - 1) {
+            strcat(output, ",");
+        }
+    }
+}
+
+/*
  * encodes a message and saves it into the given output
  * params:  msg - struct containing message details
  *          output - string containing encoded message
@@ -33,22 +47,29 @@ char* encode_hub(Msg* msg) {
             break;
         case PURCHASED:
             strcpy(output, "purchased"); 
-            concat(output, to_string(msg->player));
+            charcat(output, strlen("purchased"), msg->player);
             strcat(output, ":");
             concat(output, to_string(msg->card));
             strcat(output, ":");
-            for(int i = PURPLE; i < CARD_SIZE; i++) {
-                concat(output, to_string(msg->info[i]));
-                strcat(output, ",");   
-            }
+            add_token_info(output, msg->info);
+            strcat(output, ",");   
             concat(output, to_string(msg->wild));
             break;
         case WILD:
             strcpy(output, "wild");
-            concat(output, to_string(msg->player));
+            charcat(output, strlen("wild"), msg->player);
+            break;
+        case TOOK:
+            strcpy(output, "took");
+            charcat(output, strlen("took"), msg->player);
+            strcat(output, ":");
+            add_token_info(output, msg->info);
             break;
         default:
             free(output);
+#ifdef TEST
+            fprintf(stderr, "invalid message\n");
+#endif
             return NULL;
     }
 
@@ -162,7 +183,7 @@ Comm decode_hub_msg(Msg* msg, char* input) {
  */
 Comm decode_player_msg(Msg* msg, char* input) {
     int card, purple, brown, yellow, red, wild;
-    char end;
+    char end = '\0';
 
 #ifdef TEST
     fprintf(stderr, "decode:\tplayer=%s\n", input);

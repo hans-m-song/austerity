@@ -209,12 +209,13 @@ int* get_card_cost(int* discount, int* tokens, Card card) {
             }
         }
 
-#ifdef TEST
+#ifdef VERBOSE 
         fprintf(stderr, "cost:%d, discount:%d, have:%d, used:%d, wild:%d\n", 
                 card[i + 2] - discount[i], 
                 discount[i],
                 tokens[i],
                 usedTokens[i], 
+                (card[i + 2] - discount[i] < 0) ? 0 : 
                 card[i + 2] - discount[i] - tokens[i]);
 #endif
     }

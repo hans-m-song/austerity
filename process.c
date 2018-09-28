@@ -70,6 +70,7 @@ void pipe_setup(Player* player, char type) {
     } else { // child
         dup2(player->pipeOut[READ], STDIN_FILENO);
         dup2(player->pipeIn[WRITE], STDOUT_FILENO);
+        close(STDERR_FILENO);
         close(player->pipeIn[READ]);
         close(player->pipeIn[WRITE]);
         close(player->pipeOut[READ]);
