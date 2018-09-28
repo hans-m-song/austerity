@@ -14,6 +14,7 @@
  * checks invocation arguments and saves into session memory
  * params:  argv - array of invocation arguments
  *          game - struct containing game relevant information
+ *          session - struct containing session only information
  * returns: E_ARGV if any invalid arguments, 
  *          E_DECKIO if deck cannot be accessed, 
  *          E_DECKR if invalid deck contents,
@@ -96,6 +97,7 @@ Error send_msg(Msg* msg, FILE* destination) {
 #endif
 
     fprintf(destination, "%s\n", encodedMsg);
+    fflush(destination);
     free(encodedMsg);
     
     int signal = check_signal();

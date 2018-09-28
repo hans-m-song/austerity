@@ -4,6 +4,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <string.h>
 #include "err.h"
 #include "common.h"
 #include "card.h"
@@ -18,8 +19,10 @@
  */
 void kill_players(int pCount, Player* players, Error err) {
     for(int i = 0; i < pCount; i++) {
-        fclose(players[i].toChild);
-        fclose(players[i].fromChild);
+        if(players[i].toChild != NULL) {
+            fclose(players[i].toChild);
+            fclose(players[i].fromChild);
+        }
 
 #ifdef TEST
         fprintf(stderr, "[%d]killing: player %c:%d, err:%d\n", 
@@ -127,15 +130,6 @@ Error make_exec(int pCount, int pID, char** players) {
 Error check_player_start(int pCount, Session* session) {
     sleep(1); // wait for failed exec to return
     for(int i = 0; i < pCount; i++) { // check if exec succeeded
-#ifdef TEST
-        //char buffer[LINE_BUFF] = {0};
-        //fgets(buffer, LINE_BUFF, session->players[i].fromChild);
-        //fgetc(session->players[i].fromChild);
-        //printf("child %c announcing: %s", i + TOCHAR, buffer);
-        char* line = read_line(session->players[i].fromChild, 1, 1);
-        printf("child %c announcing: %s", i + TOCHAR, line);
-        free(line);
-#endif
         int status = 0;
         int returnPID = waitpid(session->players[i].pid, &status, WNOHANG);
         if(returnPID != 0) {
@@ -143,8 +137,21 @@ Error check_player_start(int pCount, Session* session) {
             printf("%c exited prematurely, status:%d\n", 
                     i + TOCHAR, WEXITSTATUS(status));
 #endif
+            session->players[i].toChild = NULL;
+            session->players[i].fromChild = NULL;
             return E_EXEC;
         }
+        
+        session->players[i].toChild = 
+                fdopen(session->players[i].pipeOut[WRITE], "w");
+        session->players[i].fromChild = 
+                fdopen(session->players[i].pipeIn[READ], "r");
+
+#ifdef TEST
+        char* line = read_line(session->players[i].fromChild, 1, 1);
+        printf("child %c announcing: %s", i + TOCHAR, line);
+        free(line);
+#endif
     }
 
     return OK;
@@ -160,11 +167,21 @@ Error check_player_start(int pCount, Session* session) {
  *          OK otherwise
  */
 Error start_players(int pCount, char** players, Game* game, Session* session) {
+    session->parentPID = getpid();
+    session->playerStats = (Game*)malloc(sizeof(Game) * pCount);
     session->players = (Player*)malloc(sizeof(Player) * pCount);
     for(int i = 0; i < pCount; i++, game->pCount++) {
         if(init_pipe(&session->players[i]) != OK) {
             return E_EXEC;
         }
+
+        session->playerStats[i].pID = i;
+        session->playerStats[i].numPoints = 0;
+        memset(session->playerStats[i].discount, 
+                0, sizeof(int) * TOKEN_SIZE);
+        memset(session->playerStats[i].ownedTokens, 
+                0, sizeof(int) * TOKEN_SIZE);
+        session->playerStats[i].wild = 0;
 
         pid_t pid = fork();
         
@@ -176,16 +193,13 @@ Error start_players(int pCount, char** players, Game* game, Session* session) {
             pipe_setup(&session->players[i], 'c');
 #ifdef TEST
             printf("child %d started\n", getpid());
+            fflush(stdout);
 #endif
             return make_exec(pCount, i, players); // should not return
         } 
         
         if(pid > 0) { // parent
             session->players[i].pid = pid;
-            session->players[i].toChild = 
-                fdopen(session->players[i].pipeOut[WRITE], "w");
-            session->players[i].fromChild = 
-                fdopen(session->players[i].pipeIn[READ], "r");
             pipe_setup(&session->players[i], 'p');
         }
     }

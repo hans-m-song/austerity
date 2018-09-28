@@ -17,6 +17,7 @@ typedef struct {
     int id;
     pid_t parentPID;
     Player* players;
+    Game* playerStats;
 } Session;
 
 void kill_players(int pCount, Player* players, Error err);

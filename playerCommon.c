@@ -139,6 +139,7 @@ Error send_move(Game* game, Msg* msg) {
 #endif
    
     fprintf(stdout, "%s\n", encodedMsg);
+    fflush(stdout);
     free(encodedMsg);
     
     if(msg->type == PURCHASE || msg->type == TAKE) {

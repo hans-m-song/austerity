@@ -32,6 +32,7 @@ void end_game(Game* game, Session* session, Error err) {
     }
     
     free(session->players);
+    free(session->playerStats);
     
     if(err) {
         exit(err);
@@ -112,11 +113,12 @@ Comm get_player_move(Game* game, Player player, Msg* response) {
 
         if(line == NULL || check_signal()) {
 #ifdef TEST
-        fprintf(stderr, "interrrupted by signal: %d, line:%s\n",
-                check_signal(), line);
+            fprintf(stderr, "interrrupted by signal: %d, line:%s\n",
+                    check_signal(), line);
 #endif
 
             free(line);
+            free(response->info);
             return ERR;   
         }
 
@@ -126,6 +128,7 @@ Comm get_player_move(Game* game, Player player, Msg* response) {
         }
     }
     
+    free(response->info);
     return ERR;
 }
 
@@ -133,17 +136,35 @@ Comm get_player_move(Game* game, Player player, Msg* response) {
  * checks if any players have won the game
  * params:  numPoints - number of points to win
  *          pCount - number of players
- *          players - players in game
+ *          playerStats - stats of players in game
  * returns: UTIL if there are winners
  *          OK otherwise
  */
-Error check_win() { //int numPoints, int pCount, Player* players) {
-
+Error check_win(int winningPoints, int pCount, Game* playerStats) {
+    for(int i = 0; i < pCount; i++) {
+        if(playerStats[i].numPoints >= winningPoints) {
+            return UTIL;
+        }
+    }
     return OK;
 }
 
 /*
- * main logic for the hub
+ * execute player move
+ * params:  game - struct containing relevant game information
+ *          session - struct containing hub only information
+ *          response - struct message contents is saved to
+ */
+Error do_move() { //Game* game, Session* session, Msg* response) {
+    return OK;
+}
+
+/*
+ * main logic for the hub;
+ * for all players: request move (reprompt once if necessary)
+ *                  execute move
+ * check if any players have reached the win condition
+ * repeat
  * params:  game - struct containing relevant game information
  *          session - struct containing hub only information
  * returns: E_DEADPLAYER if client disconnects,
@@ -163,7 +184,7 @@ Error start_hub(Game* game, Session* session) {
         for(int i = 0; i < game->pCount; i++) {
             Msg response = {-1, 0, 0, 0, 0, 0};
             if((int)get_player_move(game, session->players[i], 
-                        &response) == ERR) {
+                    &response) == ERR) {
                 signal = check_signal();
                 if(errno == EINTR || signal == E_SIGINT) {
                     err = E_SIGINT;
@@ -172,16 +193,21 @@ Error start_hub(Game* game, Session* session) {
                 } else {
                     err = E_PROTOCOL;
                 }
-                free(response.info);
                 break;
             }
-
-            // TODO exec player request
+            
+            err = do_move(game, session, &response);
         }
         if(!err) {
             printf("check win\n");
-            err = check_win(game->numPoints, game->pCount, session->players);
+            err = check_win(game->numPoints, game->pCount, 
+                    session->playerStats);
         }
+    }
+
+    if(err == UTIL) {
+        Msg endGame = {EOG, 0, 0, 0, 0, 0};
+        err = broadcast(game->pCount, session->players, &endGame);
     }
 
     if(!err) {
@@ -194,7 +220,6 @@ Error start_hub(Game* game, Session* session) {
 int main(int argc, char** argv) {
     Game game;
     Session session;
-    session.parentPID = getpid();
 
 #ifdef TEST
     printf("parent PID:\t%d\n", getpid());
